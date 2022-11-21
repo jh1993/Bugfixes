@@ -1,0 +1,128 @@
+PLEASE CHECK THE DISCORD THREAD FOR UPDATE NOTICES, AND RE-DOWNLOAD THE MOD WHENEVER THERE'S AN UPDATE.
+
+To install this mod, click on the green "Code" button on this page, then "Download ZIP". Please rename the "Bugfixes-main" folder to "Bugfixes" before putting it into your mods folder.
+
+This mod requires AAA_Loader by Bord Listian: https://github.com/DaedalusGame/AAA_Loader
+Visit the above link and install it the same way you install this mod, except that you rename the folder containing AAA_Loader.py as "AAA_Loader" before putting it into the mods folder.
+
+This mod may be partially incompatible with API_Universal until I make my own fork of it to work out the incompatibilities, which may be an annoying and tedious task so it may take a while. Until then, use API_Universal at your own risk.
+
+This mod fixes a number of things that I believe to be almost certainly bugs or unintended behavior. It also adds a few invisible things under the hood that some of my other mods require to run, since I have no better place to put them and this mod is required by said other mod to begin with.
+
+- The behavior of Frostbite + Ghostfire depended on the order in which you took the two skills. Now you always get a fire ghost when using fire damage to unfreeze an enemy.
+- Mercurial Vengeance and Toxic Fumes are now properly passive effects, meaning they're not lost upon reincarnation and can't be dispelled.
+- Natural Vigor and all shrine that gave resistances used to give them a second time upon reincarnation. Hibernation was not affected.
+- All shrines that gave regen used to give them a second time upon reincarnation.
+- Thunder Strike Storm Power upgrade now properly stuns for twice the duration.
+- Orbs no longer disappear when completely surrounded. They still disappear when reaching their destinations.
+- Trying to examine upgrades on Orb Control no longer crashes the game.
+- Hibernation will now remove itself if a unit loses the living tag. Only possible with Hollow Flesh, but still a bug.
+- Bone Wizard, Idol of Sorcery, Gemini Twin, Yggdrasil, Tombstone, Red Rider, Night Hag, Tablets, Volcano Turtle, Jack-o-Lantern, Pillar of Worms, and goatias now all show their threat areas appropriately, or at least more helpfully.
+- If an ability is on cooldown then it won't show up in threatened areas.
+- Multicast used to not work if you cast the last charge of a spell.
+- Stunned enemies' spells no longer register on the threat detector.
+- Touch of Death extra damage types now benefit from damage bonuses.
+- Suspend Mortality can no longer be cast on targets outside its range. Description changed to state that it can also target enemies.
+- Protection shrine and Shielded Minions no longer stack on reincarnation.
+- Tablet buffs no longer apply to gates or the Imp Collector.
+- Lightning Halo now tracks its damage properly for shrines, and no longer double-hits on cast.
+- Swamp Queen's attack is no longer limited to only poisoning living targets.
+- All the new idols added in the most recent update now have correct icons.
+- Hibernation no longer says "unnamed buff" in the combat log.
+- Idol of Clarity will now remove berserk properly.
+- Unit.get_buff() will now properly match subclasses of the class of buff you're trying to get. This probably won't matter much in regular play, but will matter for modded content that makes subclasses of certain buffs.
+- The hallowed earth elementals summoned by the Earth Troll Priest now have the correct tags.
+- Eye of Rage now properly benefits from shot cooldown reduction.
+- Minions summoned by gates now benefit from shrine bonuses, e.g. Spikeball Factory.
+- All furnace units now properly have the fire tag, and all copper units properly have the lightning tag.
+- Hollow Flesh is now properly classified as a debuff, and removing it properly restores the original unit's tags, resists, and max HP.
+- Darkness no longer removes blindness when it expires.
+- Venom Spit and Hungry Dead now properly set their owner fields when adding their respective spells. This causes them to properly count as damage done by the minions that cast them.
+- Ash imps now properly deal fire/dark/poison damage at random instead of only fire.
+- When reincarnation removes non-passive buffs after death, and reapplies itself after death if it is non-passive, this no longer counts as applying/removing buffs. May not matter for vanilla but may matter for mods.
+- Reincarnation now correctly preserves the minion duration of minions summoned by things other than spells.
+- Magic Missile Holy Bolt upgrade description now correctly states it affects demon units as well as undead.
+- If an originally non-living unit becomes living, it will now benefit from Hibernation after your next turn. Not possible in vanilla but possible with mods.
+- Invoke Savagery now correctly displays that non-living allies are not affected.
+- Glass mushbooms no longer erroneously say their attacks only apply glassify to living enemies.
+- Conductance description now correctly displays the resistance debuff if you have the upgrade.
+- Storm Burst clouds now properly attribute their sources to the spell itself.
+- Ice Phoenix description now correctly shows its number of reincarnations, and correctly states that its explosion deals damage in a "radius" rather than "burst", i.e. going through walls.
+- Ring of Spiders Aether Spiders upgrade now summons aether spiders with the proper melee damage.
+- Void slimes summoned by Slime Form now have the correct range.
+- When you die, your character sheet now displays the proper number of available upgrades for each spell.
+- Upgrades are excluded from the available upgrades count in the character sheet if you have an upgrade that's mutually exclusive with them.
+- Lightning Frenzy duration now benefits from Permanence.
+- Arcane Combustion and Lightning Warp now benefit from radius bonuses, which don't exist in vanilla but may exist in mods.
+- Nightmare Aura dream upgrade summons now count as units summoned by the spell.
+- Healers no longer try to heal poisoned targets. The healing ability no longer displays a damage stat, as it doesn't benefit from damage bonuses, and the amount healed is already in the description.
+- Heavenly Blast Echo Heal upgrade now benefits from duration bonuses.
+- Heavenly Blast now properly shows the holy graphical effect on tiles where damage was not dealt.
+- Venom Spit now correctly inserts the spell as the minion's first attack.
+- Venom Spit and Hungry Dead will now always be immediately added when a qualified minion is summoned.
+- Pressing Shift + Ctrl + Z while cheatmode is enabled will now disable cheatmode.
+- In cheatmode, pressing Q will now always spawn shrines on walkable tiles.
+- Very narrow cones now function correctly, and a cone will always at least hit all points in a line between the caster and target. This is not relevant in the base game, but may be relevant in mods.
+- The Restless Dead will now activate even if the dead unit was somehow killed without taking damage. Not possible in the base game, but may be possible in mods.
+- Burning shrine debuff now stacks properly so that all damage is redealt if the spell deals multiple instances of damage.
+- All buffs that do not have colors have been given appropriate colors.
+- Orbs now have the correct duration, consistent with how many turns it will take to reach its destination. This is technically a situational nerf, since this bug meant that if the orb is blocked from reaching its destination, then it will erroneously last up to 3 turns longer than intended. Orb Control is also fixed accordingly.
+- All non-player spells should now benefit properly from damage, duration, range, and radius buffs applied onto the units themselves.
+- Boiling Blood and Dragon Roar will no longer penalize the damage of spells added after a unit obtained those buffs when the buffs are removed.
+- Leap attacks no longer crash if too many units try to leap at once. Not possible in the base game but possible in mods.
+- Prince of Ruin now benefits properly from damage and radius buffs.
+- Storm Caller now benefits from duration buffs.
+- Horror and Icy Vengeance now benefit from num targets buffs.
+- Shrapnel Blast description changed to clarify that by default, only tiles in line of sight of the destroyed wall are targeted. The Puncturing Blast upgrade description is changed to clarify that it causes the shrapnel to now ignore line of sight. This upgrade used to mislead the player into thinking the shrapnel can destroy wall tiles, which is false.
+- Blue Lion shielding spell and all other spells that shield all allies in line of sight are no longer usable if all allies in line of sight have SH greater than or equal to the spell's max SH.
+- Thorn Garden and Glittering Dance now benefit from num summons bonuses, which don't exist in the base game but may exist in mods.
+- Glittering Dance faeries now have 50% chance per turn to teleport, like all other faeries, instead of 70%.
+- Afterlife shrine now applies its effect as a passive buff that cannot be dispelled.
+- All shrines now benefit from global stat bonuses, except for shrines that deal 1-2 damage or inflict debuffs for 1 turn, which are assumed to be fixed and not benefitting from bonuses. These bonuses are displayed properly in the spell screen.
+- Fire and void bomber explosions now benefit properly from damage and radius bonuses.
+- Fairies summoned by Glittering Dance now properly have arcane resistances.
+- All skills now properly reflect stat bonuses in their descriptions.
+- Shock Value and Horror can now refresh debuff duration and affect immobile units.
+- The damage upgrades of Blink now benefit from radius bonuses.
+- Death Bolt and The Restless Dead will now always correctly add minion damage bonus to the skeleton's melee, even if another spell is added to the skeleton before its melee (e.g. Hungry Dead).
+- The Restless Dead Elemental Spirits upgrade now correctly works with ice units.
+- The game no longer assumes that the only passive buffs the player can get are skills and spell upgrades.
+- Heavenly Blast and the variant used by false prophets now correctly takes its radius into account in AI targeting.
+- The UI now takes radius bonuses into account when displaying a unit's spell radius.
+- Channeling should finally work properly with Death Cleave and Lightning Form.
+- Fixed a memory leak that prevented dead units from being deleted properly, which made late-game saving potentially very slow.
+- Frostfire and deathchill tormentors' icy torment attack description changed to correctly state that they freeze for 1 turn.
+- Cauterizing shrine can no longer result in the target's current HP being higher than its max HP if the total amount of max HP drain is higher than the amount of damage done, e.g. with an innately max HP draining attack.
+- Stripped out some unused information like the name and description of each tile, which should overall reduce the time it takes to save the game by around 0.1 second. Thanks to anotak for coming up with these changes and measuring their performance impacts.
+- Siege Golems cannon self-destruct now correctly deals damage in a 3-tile radius, which benefits from radius bonuses. Description changed to correctly state that it deals damage equal to minion damage (instead of 1/4 of its max HP), and also that golems can only operate adjacent cannons and heal cannons for 2 HP.
+- Siege golems and other siege operator enemies have better pathfinding when wandering toward their cannons.
+- Inferno cannons now properly count as minions summoned by the Siege Golems spell.
+- Instead of granting you the damage buffs before the start of your turn, Necrostatics and Crystal Power now grant you the damage buffs immediately after you act, before any spell effects are processed. This makes no difference in the base game, but ensure that the damage buffs are granted after any modded effects that happen before the start of your turn, e.g. the Cosmic Stasis spell from my Missing Synergies mod that freezes enemies before the start of your turn.
+- If you have more than 4 modded archmage trials, the descriptions of trials will no longer be cut off. However, the UI cannot be scrolled, so even with this change, if you have more than 26 modded trials, the trial list would start to get cut off at the top of the screen on a 1920x1080 monitor. They'll become unclickable, but can still be selected via the arrow keys.
+- Fire and void bomber suicide explosions no longer benefit from range bonuses, since their ranges are supposed to match up with their explosion radiuses.
+- If a spell does not have blindcasting by default, but gains blindcasting from an upgrade or Oculus, the blindcasting will now be reflected in the spell display UI.
+- Heavenly Idol fire gaze now benefits from minion damage and minion range bonuses. Description changed to clarify that the additional lightning damage does not affect friendly demons and undead.
+- Ring of Spiders will no longer try to summon spiders onto walls or chasms; this may result in fewer spiders being summoned, but spiders will no longer be poisoned or stunned by this spell in a single cast. It will also no longer spawn webs inside walls.
+- Boiling Blood, Dragon Roar, and Unholy Alliance no longer affect spells inherited from the player, and no longer persist after a unit dies. This makes their behaviors consistent with other damage buffs like bloodlust and Mystic Power.
+- If a player spell has unusual casting costs associated with it, outside of the usual charges, the UI will now respect those unusual costs when letting you select spells to cast. Does not affect the base game but may affect mods.
+- Turtles' resistance bonuses from withdrawing into their shells are now considered buffs and can be dispelled accordingly.
+- Natural Vigor and Oaken, Tundra, Swamp, Sandstone, and Blue Sky shrines now apply their resistance bonuses as passive buffs instead of increasing base resistances directly. This makes no difference in the base game, given the earlier fix to not make them get applied repeatedly upon reincarnation, but will interact better with certain mods.
+- If the past self of a unit is somehow brought back after the unit has already matured into another unit, the maturation timer of said past self will be reset instead of going into the negatives.
+- Threat display and LoS display will now be displayed simultaneously when you have the corresponding keys pressed, and are displayed simultaneously with spell targeting display.
+- Wolf pounce now benefits from minion range bonuses.
+- Annihilate and Mega Annihilate no longer cascade if they obtain bonuses to cascade range outside of their cascade upgrades. Not possible in the base game, but possible with mods. Cascade upgrade description changed to clarify that the cascade works if the original target is an empty tile, and that it ignores line of sight.
+- The debuff inflicted by Melt now has a proper icon.
+- Collected Agony now shows the correct graphical effect when dealing damage.
+- If buffs are applied or removed before the start of a unit's turn, the game now iterates that unit's list of buffs properly.
+- Meteor Shower stun duration now benefits from duration bonuses.
+- Mountain Mage and Earth Troll Magmancer quakeport can now only make floors, so they can no longer softlock the game. Dylan's previous implementation of only affecting "unimportant" floors didn't work, and I didn't want to work out the exact reason why.
+- Purity will no longer make the user debuffable after wearing off if the user was originally undebuffable.
+- Wolf bloodhound bloodrage duration, Giant Bear blood bear blood rage duration, and venom bear poison duration now benefit from duration bonuses, both the player's and their own.
+- Basic melee attacks that inflict debuffs on hit now benefit from duration bonuses.
+- If a unit is killed directly without dealing damage, its HP will be set to 0 and killed flag set to true before the death event is raised, which prevents the death event from erroneously thinking that the unit is still alive.
+- Mercurize poison aura upgrade now benefits from radius bonuses.
+- Fae Court description now correctly states that fairies have 50% arcane resistance instead of 75%, and that their heal have 2 more range than their attack. The fae queen's fairy and faethorn summons now have the same bonuses as fairies summoned by the spell itself.
+- Ghostfire description now correctly states that fire ghosts have 50% dark resistance instead of 100%. The fire ghosts are now identical to enemy fire ghosts.
+- Units that mature into other units, transform into other units on death, and have a chance to spawn other units per turn now attribute the new units to the source that summoned the original unit, and apply that source's minion bonuses to the new units. Units that split into smaller versions of themselves now also attribute their children to the same source as themselves, but do not apply minion bonuses, as the HP and damage of the children depend on the parent's HP; similarly for slimes.
+- Units that have a chance each turn to automatically summon other units can now summon them within 3 tiles instead of only adjacent, like gates.
+- Floating Eye now only casts self-targeted eye spells. Doesn't affect the base game but may affect mods.
