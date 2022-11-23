@@ -235,6 +235,16 @@ def fix_bloodghast_desc(unit):
     if unit.team == TEAM_ENEMY:
         unit.spells[0].description = "Gain +1 damage for 10 turns with each attack"
 
+def fix_giant_worm_ball(unit):
+    def summon_worms(caster, target):
+        worms = WormBall(5)
+        worms.team = caster.team
+        worms.source = caster.source
+        p = caster.level.get_summon_point(target.x, target.y, 1.5)
+        if p:
+            caster.level.add_obj(worms, p.x, p.y)
+    unit.spells[0].onhit = summon_worms
+
 bugged_units_fixer = {
     "Swamp Queen": lambda unit: setattr(unit.spells[2], "onhit", lambda caster, target: target.apply_buff(Poison(), 4)),
     "Slimesoul Idol": lambda unit: set_asset(unit, "slimesoul_idol"),
@@ -253,7 +263,8 @@ bugged_units_fixer = {
     "Ash Imp": lambda unit: setattr(unit.spells[0], "damage_type", [Tags.Fire, Tags.Dark, Tags.Poison]),
     "Glass Mushboom": fix_glass_mushboom_desc,
     "Frostfire Tormentor": lambda unit: setattr(unit.spells[1], "description", "Applies frozen for 1 turn"),
-    "Deathchill Tormentor": lambda unit: setattr(unit.spells[0], "description", "Applies frozen for 1 turn")
+    "Deathchill Tormentor": lambda unit: setattr(unit.spells[0], "description", "Applies frozen for 1 turn"),
+    "Giant Worm Ball": fix_giant_worm_ball
 }
 
 class OakenBuff(Buff):
@@ -4052,7 +4063,15 @@ def modify_class(cls):
     if cls is WyrmEggShrineBuff:
 
         def get_wyrm(self, unit):
-            apply_minion_bonuses(self, unit)
+            unit.max_hp = self.get_stat("minion_health", base=unit.max_hp)
+            for s in unit.spells:
+                if hasattr(s, 'damage'):
+                    if isinstance(s, BreathWeapon):
+                        s.damage = self.get_stat("breath_damage", base=s.damage)
+                    else:
+                        s.damage = self.get_stat('minion_damage', base=s.damage)
+                if hasattr(s, 'range') and s.range >= 2:
+                    s.range = self.get_stat('minion_range', base=s.range)
             return unit
 
         def do_summon(self, evt):

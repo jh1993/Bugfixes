@@ -126,3 +126,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Units that mature into other units, transform into other units on death, and have a chance to spawn other units per turn now attribute the new units to the source that summoned the original unit, and apply that source's minion bonuses to the new units. Units that split into smaller versions of themselves now also attribute their children to the same source as themselves, but do not apply minion bonuses, as the HP and damage of the children depend on the parent's HP; similarly for slimes.
 - Units that have a chance each turn to automatically summon other units can now summon them within 3 tiles instead of only adjacent, like gates.
 - Floating Eye now only casts self-targeted eye spells. Doesn't affect the base game but may affect mods.
+- Friendly giant worm balls (via Dominate or something modded) now spit friendly small worm balls with the same source as their casters.
