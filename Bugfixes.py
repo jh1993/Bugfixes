@@ -3300,7 +3300,7 @@ def modify_class(cls):
             if unit:
                 buff = self.buff()
                 buff.caster = self.caster
-                unit.apply_buff(buff, self.get_stat("duration"))
+                unit.apply_buff(buff, self.get_stat("duration") if self.duration else 0)
                 if self.effect:
                     for p in self.caster.level.get_points_in_line(self.caster, Point(x, y)):
                         self.caster.level.show_effect(p.x, p.y, self.effect)
@@ -5511,6 +5511,17 @@ def modify_class(cls):
             self.find_clear = False
 
     if cls is Spell:
+
+        def get_stat(self, attr, base=None):
+            statholder = self.statholder or self.caster
+            
+            if base is None:
+                base = getattr(self, attr, 0)
+
+            if not statholder:
+                return base
+
+            return statholder.get_stat(base, self, attr)
 
         def can_cast(self, x, y):
 

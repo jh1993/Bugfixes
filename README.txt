@@ -130,3 +130,5 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - All spells should work properly with Oculus now, even beams. Note that this won't allow bursts to pass through walls if they can't already do so innately.
 - Icicle, Poison Sting, Magic Missile, goblin demolitionist bomb toss, ice witch freeze, red cyclops batting units, giant soul jar pickle soul, Ice Wizard icicle, and Goblin Wizard ignite poison now show their graphical effects properly when granted blindcasting.
 - Pyrostatic Pulse, Call Archon lightning beam, butterfly demon lightning beam, and storm fiend lightning beam now deal damage correctly when granted blindcasting.
+- Now when a spell checks its own stats, it'll always check its caster's stat bonuses even if the caster has no buffs. This ensures that it always returns consistent results, in cases where a base stat is subjected to clamping, or if a unit somehow has stat bonuses that aren't from buffs.
+- One specific non-player spell that applies debuffs will no longer try to check for duration bonuses and return a value of 1 minimum if the base duration is 0, thereby making the debuff permanent as intended.
