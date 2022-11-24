@@ -127,3 +127,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Units that have a chance each turn to automatically summon other units can now summon them within 3 tiles instead of only adjacent, like gates.
 - Floating Eye now only casts self-targeted eye spells. Doesn't affect the base game but may affect mods.
 - Friendly giant worm balls (via Dominate or something modded) now spit friendly small worm balls with the same source as their casters.
+- All spells should work properly with Oculus now, even beams. Note that this won't allow bursts to pass through walls if they can't already do so innately.
