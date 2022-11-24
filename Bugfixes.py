@@ -1812,6 +1812,42 @@ def modify_class(cls):
 
     if cls is Unit:
 
+        def get_stat(self, base, spell, attr):
+
+            # Range for self targeted or melee spells does not change
+            if attr == 'range' and spell.range < 2:
+                return spell.range
+
+            bonus_total = 0
+            # Add spell specific bonus
+            bonus_total += self.spell_bonuses[type(spell)].get(attr, 0)
+
+            # Add tag bonuses
+            for tag in spell.tags:
+                bonus_total += self.tag_bonuses[tag].get(attr, 0)
+
+            # Add global bonus
+            bonus_total += self.global_bonuses.get(attr, 0)
+
+            isint = type(base) == int
+
+            if is_stat_pct(attr):
+                multiplier = (bonus_total + 100) / 100.0
+                value = base * multiplier
+                if isint:
+                    value = int(math.ceil(value))
+                return value
+
+            else:
+                value = base + bonus_total		
+                # Just so that the Warp Strike upgrade from my Missing Synergies mod can tell
+                # # whether a spell has multiple sources of blindcasting.	
+                if attr != "requires_los":
+                    value = max(value, 0)
+                if attr in ['range', 'duration']:
+                    value = max(value, 1)
+                return value
+
         def deal_damage(self, amount, damage_type, spell, penetration=0):
             if not self.is_alive():
                 return 0
@@ -2340,6 +2376,32 @@ def modify_class(cls):
             self.upgrades['slaughter'] = (1, 4, "Slaughter Bolt", "If Magic Missile targets a [living] unit, it deals [poison], [dark], and [physical] damage instead of [arcane].", 'bolt')
             self.upgrades['holy'] = (1, 4, "Holy Bolt", "If Magic Missile targets a [demon] or [undead] unit, it deals [holy] damage in addition to [arcane] damage.", 'bolt')
             self.upgrades['disruption'] = (1, 6, "Disruption Bolt", "If Magic Missile targets an [arcane] unit, it deals [dark] and [holy] damage instead of [arcane].", 'bolt')
+
+        def cast(self, x, y):
+            dtypes = [Tags.Arcane]
+            unit = self.caster.level.get_unit_at(x, y)
+                    
+            for p in Bolt(self.caster.level, self.caster, Point(x, y)):
+                self.caster.level.show_effect(p.x, p.y, Tags.Arcane, minor=True)
+                yield
+
+            if unit:
+                if self.get_stat('shield_burn'):
+                    unit.shields -= self.get_stat('shield_burn')
+                    unit.shields = max(unit.shields, 0)
+
+                if self.get_stat('slaughter') and Tags.Living in unit.tags:
+                    dtypes = [Tags.Poison, Tags.Dark, Tags.Physical]
+                if self.get_stat('disruption') and Tags.Arcane in unit.tags:
+                    dtypes = [Tags.Holy, Tags.Dark]
+                if self.get_stat('holy') and (Tags.Undead in unit.tags or Tags.Demon in unit.tags):
+                    dtypes = [Tags.Holy, Tags.Arcane]
+
+            for dtype in dtypes:
+                self.caster.level.deal_damage(x, y, self.get_stat('damage'), dtype, self)
+                if len(dtypes)> 1:
+                    for i in range(4):
+                        yield
 
     if cls is InvokeSavagerySpell:
 
@@ -3050,13 +3112,13 @@ def modify_class(cls):
 
         def cast_instant(self, x, y):
 
-            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y), find_clear=True):
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y)):
                 self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), self.damage_type, self)
 
     if cls is FiendStormBolt:
 
         def cast_instant(self, x, y):
-            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y), find_clear=True)[1:]:
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]:
                 self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), self.damage_type, self)
                 self.caster.level.add_obj(StormCloud(self.caster, self.damage), p.x, p.y)
 
@@ -5448,9 +5510,244 @@ def modify_class(cls):
             self.two_pass = True
             self.find_clear = False
 
+    if cls is Spell:
+
+        def can_cast(self, x, y):
+
+            if (not self.can_target_self) and (self.caster.x == x and self.caster.y == y):
+                return False
+
+            if (not self.can_target_empty) and (not self.caster.level.get_unit_at(x, y)):
+                return False
+
+            if self.must_target_walkable and not self.caster.level.can_walk(x, y):
+                return False
+
+            if self.must_target_empty and self.caster.level.get_unit_at(x, y):
+                return False
+
+            if self.caster.is_blind() and distance(Point(x, y), self.caster, diag=True) > 1:
+                return False
+
+            if not distance(Point(x, y), Point(self.caster.x, self.caster.y), diag=self.melee or self.diag_range) <= self.get_stat('range'):
+                return False
+
+            if self.get_stat('requires_los') > 0:
+                if not self.caster.level.can_see(self.caster.x, self.caster.y, x, y, light_walls=self.cast_on_walls):
+                    return False
+
+            return True
+
+    if cls is Icicle:
+
+        def cast(self, x, y):
+
+            for p in Bolt(self.caster.level, self.caster, Point(x, y)):
+                self.caster.level.show_effect(p.x, p.y, Tags.Physical, minor=True)
+                yield
+
+            self.caster.level.deal_damage(x, y, self.get_stat('damage'), Tags.Physical, self)
+            unit = self.caster.level.get_unit_at(x, y)
+            if unit and self.get_stat('freezing'):
+                unit.apply_buff(FrozenBuff(), 2 + self.get_stat('duration'))
+
+            yield
+
+            for stage in Burst(self.caster.level, Point(x, y), self.get_stat('radius')):
+                for p in stage:
+                    self.caster.level.deal_damage(p.x, p.y, self.get_stat('damage'), Tags.Ice, self)
+                yield
+
+    if cls is PoisonSting:
+
+        def cast(self, x, y):
+
+            for p in Bolt(self.caster.level, self.caster, Point(x, y), find_clear=False):
+                self.caster.level.show_effect(p.x, p.y, Tags.Poison, minor=True)
+                yield
+            
+            damage = self.caster.level.deal_damage(x, y, self.get_stat('damage'), Tags.Physical, self)
+
+            unit = self.caster.level.get_unit_at(x, y)
+            if unit and damage and self.get_stat('antigen'):
+                unit.apply_buff(Acidified())
+            if unit and unit.resists[Tags.Poison] < 100:
+                unit.apply_buff(Poison(), self.get_stat('duration'))
+
+    if cls is ArchonLightning:
+
+        def cast_instant(self, x, y):
+            damage = self.get_stat('damage')
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]:
+                unit = self.caster.level.get_unit_at(p.x, p.y)
+                if unit and not are_hostile(unit, self.caster):
+                    unit.add_shields(1)
+                else:
+                    self.caster.level.deal_damage(p.x, p.y, damage, Tags.Lightning, self)
+
+    if cls is PyrostaticPulse:
+
+        def get_impacted_tiles(self, x, y):
+            center_beam = self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]
+            side_beam = []
+            for p in center_beam:
+                for q in self.caster.level.get_points_in_ball(p.x, p.y, 1.5):
+                    if q.x == self.caster.x and q.y == self.caster.y:
+                        continue
+                    if q not in center_beam and q not in side_beam:
+                        side_beam.append(q)
+            return center_beam + side_beam
+
+        def cast_instant(self, x, y):
+
+            center_beam = self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]
+            side_beam = []
+            for p in center_beam:
+                for q in self.caster.level.get_points_in_ball(p.x, p.y, 1.5):
+                    if q.x == self.caster.x and q.y == self.caster.y:
+                        continue
+                    if q not in center_beam and q not in side_beam:
+                        side_beam.append(q)
+
+            damage = self.get_stat('damage')
+            for p in center_beam:
+                self.caster.level.deal_damage(p.x, p.y, damage, Tags.Fire, self)
+            for p in side_beam:
+                self.caster.level.deal_damage(p.x, p.y, damage, Tags.Lightning, self)
+
+    if cls is BombToss:
+
+        def cast(self, x, y):
+
+            blocker = self.caster.level.get_unit_at(x, y)
+            if blocker:
+                return
+
+            for q in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:-1]:
+                self.caster.level.deal_damage(q.x, q.y, 0, Tags.Arcane, self)
+                yield
+
+            bomb = self.spawn()
+            self.summon(bomb, target=Point(x, y))
+
+    if cls is GhostFreeze:
+
+        def cast(self, x, y):
+
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y)):
+                self.caster.level.show_effect(p.x, p.y, Tags.Ice)
+                yield
+
+            unit = self.caster.level.get_unit_at(x, y)
+            if unit:
+                unit.apply_buff(FrozenBuff(), self.get_stat('duration'))
+
+    if cls is CyclopsAllyBat:
+
+        def cast(self, x, y):
+            
+            target = self.caster.level.get_unit_at(x, y)
+            if not target:
+                return
+
+            chump = self.get_chump(target.x, target.y)
+            if not chump:
+                return
+
+            dest = self.caster.level.get_summon_point(x, y, radius_limit=1, diag=True)
+            if not dest:
+                return
+
+            chump.invisible = True
+            self.caster.level.act_move(chump, dest.x, dest.y, teleport=True)
+            for p in self.caster.level.get_points_in_line(chump, dest):
+                self.caster.level.leap_effect(p.x, p.y, Tags.Physical.color, chump)
+                yield
+            chump.invisible = False
+            
+            target.deal_damage(self.get_stat('damage'), Tags.Physical, self)
+            chump.deal_damage(self.get_stat('damage'), Tags.Physical, self)
+
+    if cls is CyclopsEnemyBat:
+
+        def cast(self, x, y):
+            unit = self.caster.level.get_unit_at(x, y)
+            if not unit:
+                return
+            # If the level is totally full, just whack the guy and call it a day
+            unit.deal_damage(self.get_stat('damage'), Tags.Physical, self)
+            target = self.get_destination(unit)
+            if not target:
+                return
+
+            unit.invisible = True
+            self.caster.level.act_move(unit, target.x, target.y, teleport=True)
+            for p in self.caster.level.get_points_in_line(unit, target):
+                self.caster.level.leap_effect(p.x, p.y, Tags.Physical.color, unit)
+                yield
+            unit.invisible = False
+
+    if cls is JarAlly:
+
+        def cast(self, x, y):
+
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:-1]:
+                self.caster.level.deal_damage(p.x, p.y, 0, Tags.Dark, self)
+                yield
+
+            unit = self.caster.level.get_unit_at(x, y)
+            if not unit:
+                return
+
+            unit.max_hp -= 10
+            unit.max_hp = max(1, unit.max_hp)
+            unit.cur_hp = min(unit.cur_hp, unit.max_hp)
+
+            buff = Soulbound(self.caster)
+            unit.apply_buff(buff)
+
+    if cls is WizardIcicle:
+
+        def cast(self, x, y):
+            i = 0
+            for point in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:-1]:
+                i += 1
+                i = i % 2
+                dtype = self.damage_type[i]
+                self.caster.level.flash(point.x, point.y, dtype.color)
+                yield
+
+            for dtype in self.damage_type:
+                self.caster.level.deal_damage(x, y, self.get_stat('damage'), dtype, self)
+                for i in range(7):
+                    yield
+
+    if cls is WizardIgnitePoison:
+
+        def cast(self, x, y):
+
+            i = 0
+            dtypes = [Tags.Fire, Tags.Poison]
+            for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:-1]:
+                i += 1
+                i %= 2
+                self.caster.level.deal_damage(p.x, p.y, 0, dtypes[i], self)
+                yield True
+
+            # Why would we ever not have the buff?  Some krazy buff triggers probably
+            target = self.caster.level.get_unit_at(x, y)
+            assert(target)
+
+            buff = target.get_buff(Poison)
+            if buff:
+                target.deal_damage(buff.turns_left, Tags.Fire, self)
+                target.remove_buff(buff)
+
+            yield False
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, RingOfSpiders, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, CrystallographerActiveBuff, Necrostatics, NecrostaticStack, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, MercurizeBuff, HeavenlyIdol, SummonFloatingEye, SlimeBuff, Bolt]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, RingOfSpiders, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, CrystallographerActiveBuff, Necrostatics, NecrostaticStack, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, MercurizeBuff, HeavenlyIdol, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison]:
     curr_module.modify_class(cls)

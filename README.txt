@@ -128,3 +128,5 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Floating Eye now only casts self-targeted eye spells. Doesn't affect the base game but may affect mods.
 - Friendly giant worm balls (via Dominate or something modded) now spit friendly small worm balls with the same source as their casters.
 - All spells should work properly with Oculus now, even beams. Note that this won't allow bursts to pass through walls if they can't already do so innately.
+- Icicle, Poison Sting, Magic Missile, goblin demolitionist bomb toss, ice witch freeze, red cyclops batting units, giant soul jar pickle soul, Ice Wizard icicle, and Goblin Wizard ignite poison now show their graphical effects properly when granted blindcasting.
+- Pyrostatic Pulse, Call Archon lightning beam, butterfly demon lightning beam, and storm fiend lightning beam now deal damage correctly when granted blindcasting.
