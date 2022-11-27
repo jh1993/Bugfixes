@@ -133,3 +133,11 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Now when a spell checks its own stats, it'll always check its caster's stat bonuses even if the caster has no buffs. This ensures that it always returns consistent results, in cases where a base stat is subjected to clamping, or if a unit somehow has stat bonuses that aren't from buffs.
 - One specific non-player spell that applies debuffs will no longer try to check for duration bonuses and return a value of 1 minimum if the base duration is 0, thereby making the debuff permanent as intended.
 - Mercurize now summons the geist on the same tile as the original target if possible.
+- Icicle no longer freezes for 1 turn longer than it should.
+- Toxic Spores now benefits from all minion damage and duration bonuses with its explosion damage and debuffs.
+- Ice Phoenix explosion now benefits from minion damage and radius bonuses.
+- Seraph auras now benefit from radius bonuses, and Essence Aura has a proper description.
+- Plague of Filth toads now benefit from minion range bonuses, and snake poison now benefit from duration bonuses.
+- Pyrostatic Hex now benefits from num targets bonuses, and Linear Conductance now works properly.
+- Multicast, Suspend Mortality, Holy Fire, Heaven's Wrath, Conductance descriptions updated with missing information.
+- All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
