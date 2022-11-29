@@ -141,3 +141,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Pyrostatic Hex now benefits from num targets bonuses, and Linear Conductance now works properly.
 - Multicast, Suspend Mortality, Holy Fire, Heaven's Wrath, Conductance descriptions updated with missing information.
 - All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
+- Void and Ice Drake spell descriptions now correctly reflect the spells' breath damage stats.
