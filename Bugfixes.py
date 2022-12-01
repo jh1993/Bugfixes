@@ -3330,7 +3330,10 @@ def modify_class(cls):
             self.radius = 6
             self.damage = 22
             self.cool_down = 7
-            self.description = "Deals %d damage to all enemies within %d tiles" % (self.damage, self.get_stat("radius"))
+            self.damage_type = Tags.Dark
+
+        def get_description(self):
+            return "Deals %d damage to all enemies within %d tiles." % (self.get_stat("damage"), self.get_stat("radius"))
 
         def cast_instant(self, x, y):
             for p in self.caster.level.get_points_in_ball(self.caster.x, self.caster.y, self.get_stat("radius")):
