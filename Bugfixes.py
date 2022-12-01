@@ -3335,8 +3335,11 @@ def modify_class(cls):
         def get_description(self):
             return "Deals %d damage to all enemies within %d tiles." % (self.get_stat("damage"), self.get_stat("radius"))
 
+        def get_impacted_tiles(self, x, y):
+            return list(self.caster.level.get_points_in_ball(self.caster.x, self.caster.y, self.get_stat("radius")))
+
         def cast_instant(self, x, y):
-            for p in self.caster.level.get_points_in_ball(self.caster.x, self.caster.y, self.get_stat("radius")):
+            for p in self.get_impacted_tiles(x, y):
                 unit = self.caster.level.get_unit_at(p.x, p.y)
                 if unit and not are_hostile(self.caster, unit):
                     continue
@@ -3345,6 +3348,16 @@ def modify_class(cls):
                     continue
 
                 self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), Tags.Dark, self)
+
+        def get_ai_target(self):
+            for p in self.get_impacted_tiles(self.caster.x, self.caster.y):
+                u = self.caster.level.get_unit_at(p.x, p.y)
+                if u and are_hostile(u, self.caster):
+                    return self.caster
+            return None
+
+        def can_threaten(self, x, y):
+            return distance(self.caster, Point(x, y)) <= self.get_stat("radius")
 
     if cls is HagSwap:
 

@@ -17,7 +17,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Orbs no longer disappear when completely surrounded. They still disappear when reaching their destinations.
 - Trying to examine upgrades on Orb Control no longer crashes the game.
 - Hibernation will now remove itself if a unit loses the living tag. Only possible with Hollow Flesh, but still a bug.
-- Bone Wizard, Idol of Sorcery, Gemini Twin, Yggdrasil, Tombstone, Red Rider, Night Hag, Tablets, Volcano Turtle, Jack-o-Lantern, Pillar of Worms, and goatias now all show their threat areas appropriately, or at least more helpfully.
+- Bone Wizard, Idol of Sorcery, Gemini Twin, Yggdrasil, Tombstone, Red Rider, Night Hag, Tablets, Volcano Turtle, Jack-o-Lantern, Pillar of Worms, Fallen Angel, and goatias now all show their threat areas appropriately, or at least more helpfully.
 - If an ability is on cooldown then it won't show up in threatened areas.
 - Multicast used to not work if you cast the last charge of a spell.
 - Stunned enemies' spells no longer register on the threat detector.
@@ -142,3 +142,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Multicast, Suspend Mortality, Holy Fire, Heaven's Wrath, Conductance descriptions updated with missing information.
 - All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
 - Void and Ice Drake spell descriptions now correctly reflect the spells' breath damage stats.
+- Fallen Angel no longer uses its Cacophony attack when no enemies are in radius.
