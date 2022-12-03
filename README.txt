@@ -143,3 +143,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
 - Void and Ice Drake spell descriptions now correctly reflect the spells' breath damage stats.
 - Fallen Angel no longer uses its Cacophony attack when no enemies are in radius.
+- Touch of Death description now has a clause saying its range cannot be increased.

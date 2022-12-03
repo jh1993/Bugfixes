@@ -1738,6 +1738,9 @@ def modify_class(cls):
 
     if cls is TouchOfDeath:
 
+        def get_description(self):
+            return "Deal [{damage}_dark:dark] damage to one unit in melee range.\nThe range of this spell is fixed, and cannot be increased using shrines, skills, or buffs.".format(**self.fmt_dict())
+
         def on_init(self):
             self.damage = 200
             self.element = Tags.Dark
