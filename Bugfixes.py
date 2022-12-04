@@ -5621,7 +5621,9 @@ def modify_class(cls):
                 unit = self.spawner()
                 if unit.max_hp == 0:
                     return
-                unit.source = self.owner.source
+                # Don't overwrite source on enemy units, else it breaks enemy HP multiplier trials.
+                if self.owner.team == TEAM_PLAYER:
+                    unit.source = self.owner.source
                 self.summon(unit)
 
     if cls is GeneratorBuff:
