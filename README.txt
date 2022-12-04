@@ -145,3 +145,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Fallen Angel no longer uses its Cacophony attack when no enemies are in radius.
 - Touch of Death description now has a clause saying its range cannot be increased.
 - Very long chains of Mercurial Vengeance can no longer crash the game when trying to save.
+- Burning shrine no longer damages allies.
