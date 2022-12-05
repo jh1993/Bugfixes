@@ -168,6 +168,10 @@ VolcanoTurtleBuff.can_threaten = lambda self, x, y: distance(Point(x, y), self.o
 
 GoatHeadBray.can_threaten = lambda self, x, y: False
 
+PhoenixBuff.can_threaten = lambda self, x, y: distance(Point(x, y), self.owner) <= 6
+
+ArcanePhoenixBuff.can_threaten = lambda self, x, y: distance(Point(x, y), self.owner) <= 6
+
 class RotBuff(Buff):
 
     def __init__(self, spell):
