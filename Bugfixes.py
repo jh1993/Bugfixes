@@ -5261,11 +5261,11 @@ def modify_class(cls):
             if self.get_stat('blood_hound'):
                 wolf.name = "Blood Hound"
                 wolf.asset_name = "blood_wolf"
-
-                wolf.spells[0].onhit = lambda caster, target: caster.apply_buff(BloodrageBuff(2), caster.get_stat(self.get_stat("duration", base=10), wolf.spells[0], "duration"))
-                wolf.spells[0].name = "Frenzy Bite"
-                wolf.spells[0].description = ""
-                wolf.spells[0].get_description = lambda: "Gain +2 damage for %i turns with each attack" % wolf.get_stat(self.get_stat("duration", base=10), wolf.spells[0], "duration")
+                melee = wolf.spells[0]
+                melee.onhit = lambda caster, target: caster.apply_buff(BloodrageBuff(2), caster.get_stat(self.get_stat("duration", base=10), melee, "duration"))
+                melee.name = "Frenzy Bite"
+                melee.description = ""
+                melee.get_description = lambda: "Gain +2 damage for %i turns with each attack" % wolf.get_stat(self.get_stat("duration", base=10), melee, "duration")
                 
                 wolf.tags = [Tags.Demon, Tags.Nature]
                 wolf.resists[Tags.Dark] = 75
@@ -5486,10 +5486,11 @@ def modify_class(cls):
 
             elif self.get_stat('blood'):
                 bear = BloodBear()
-                bear.spells[0].onhit = lambda caster, target: caster.apply_buff(BloodrageBuff(3), caster.get_stat(self.get_stat("duration", base=10), bear.spells[0], "duration"))
-                bear.spells[0].name = "Frenzy Bite"
-                bear.spells[0].description = ""
-                bear.spells[0].get_description = lambda: "Gain +3 damage for %i turns with each attack.%s" % (bear.get_stat(self.get_stat("duration", base=10), bear.spells[0], "duration"), (" Attacks %i times." % bear.spells[0].attacks) if bear.spells[0].attacks > 1 else "")
+                melee = bear.spells[0]
+                melee.onhit = lambda caster, target: caster.apply_buff(BloodrageBuff(3), caster.get_stat(self.get_stat("duration", base=10), melee, "duration"))
+                melee.name = "Frenzy Bite"
+                melee.description = ""
+                melee.get_description = lambda: "Gain +3 damage for %i turns with each attack.%s" % (bear.get_stat(self.get_stat("duration", base=10), melee, "duration"), (" Attacks %i times." % melee.attacks) if melee.attacks > 1 else "")
                 apply_minion_bonuses(self, bear)
             
             bear.spells[0].attacks = self.get_stat('minion_attacks')
