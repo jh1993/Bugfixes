@@ -457,6 +457,75 @@ def modify_class(cls):
 
     if cls is PyGameView:
 
+        def draw_wrapped_string(self, string, surface, x, y, width, color=(255, 255, 255), center=False, indent=False, extra_space=False):
+            lines = string.split('\n')
+
+            cur_x = x
+            cur_y = y
+            linesize = self.linesize
+            num_lines = 0
+
+            char_width = self.font.size('w')[0]
+            chars_per_line = width // char_width
+            for line in lines:
+                #words = line.split(' ')
+                # This regex separates periods, spaces, commas, and tokens
+                exp = '[\[\]:|\w\|\'|%|-]+|.| |,'
+                words = re.findall(exp, line)
+                words.reverse()
+                chars_left = chars_per_line
+
+                # Start each line all the way to the left
+                cur_x = x
+                assert(all(len(word) < chars_per_line) for word in words)
+
+                while words:
+                    cur_color = color
+
+                    word = words.pop()
+                    if word != ' ':
+
+                        # Process complex tooltips- strip off the []s and look up the color
+                        if word and word[0] == '[' and word[-1] == ']':
+                            tokens = word[1:-1].split(':')
+                            if len(tokens) == 1:
+                                word = tokens[0] # todo- fmt attribute?
+                                cur_color = tooltip_colors[word.lower()].to_tup()
+                            elif len(tokens) == 2:
+                                word = tokens[0]
+                                cur_color = tooltip_colors[tokens[1].lower()].to_tup()
+
+                        sub_words = word.split("_")
+                        num_sub_words = len(sub_words)
+                        n = 1
+                        for sub_word in sub_words:
+                            max_size = chars_left if sub_word in [' ', '.', ','] else chars_left - 1
+                            if len(sub_word) > max_size:
+                                cur_y += linesize
+                                num_lines += 1
+                                # Indent by one for next line
+                                cur_x = x + char_width
+                                chars_left = chars_per_line
+
+                            self.draw_string(sub_word, surface, cur_x, cur_y, cur_color, content_width=width)
+                            cur_x += (len(sub_word)) * char_width
+                            chars_left -= len(sub_word)
+                            if n < num_sub_words:
+                                cur_x += char_width
+                                chars_left -= 1
+                            n += 1
+                    else:
+                        cur_x += char_width
+                        chars_left -= 1
+
+                cur_y += linesize
+                num_lines += 1
+                if extra_space:
+                    cur_y += linesize
+                    num_lines += 1
+
+            return num_lines
+
         def choose_spell(self, spell):
             if spell.show_tt:
                 self.examine_target = spell

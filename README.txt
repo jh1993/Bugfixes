@@ -146,3 +146,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Touch of Death description now has a clause saying its range cannot be increased.
 - Very long chains of Mercurial Vengeance can no longer crash the game when trying to save.
 - Burning shrine no longer damages allies.
+- A color-coded phrase in a spell description display can now have its words split between multiple lines if it contains more than one word.
