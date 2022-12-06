@@ -1,4 +1,3 @@
-from ast import Global
 from Spells import *
 from Upgrades import *
 from Level import *
