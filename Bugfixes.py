@@ -1929,42 +1929,6 @@ def modify_class(cls):
 
     if cls is Unit:
 
-        def get_stat(self, base, spell, attr):
-
-            # Range for self targeted or melee spells does not change
-            if attr == 'range' and spell.range < 2:
-                return spell.range
-
-            bonus_total = 0
-            # Add spell specific bonus
-            bonus_total += self.spell_bonuses[type(spell)].get(attr, 0)
-
-            # Add tag bonuses
-            for tag in spell.tags:
-                bonus_total += self.tag_bonuses[tag].get(attr, 0)
-
-            # Add global bonus
-            bonus_total += self.global_bonuses.get(attr, 0)
-
-            isint = type(base) == int
-
-            if is_stat_pct(attr):
-                multiplier = (bonus_total + 100) / 100.0
-                value = base * multiplier
-                if isint:
-                    value = int(math.ceil(value))
-                return value
-
-            else:
-                value = base + bonus_total		
-                # Just so that the Warp Strike upgrade from my Missing Synergies mod can tell
-                # # whether a spell has multiple sources of blindcasting.	
-                if attr != "requires_los":
-                    value = max(value, 0)
-                if attr in ['range', 'duration']:
-                    value = max(value, 1)
-                return value
-
         def deal_damage(self, amount, damage_type, spell, penetration=0):
             if not self.is_alive():
                 return 0
@@ -3449,7 +3413,7 @@ def modify_class(cls):
     if cls is HagSwap:
 
         def can_threaten(self, x, y):
-            return distance(self.caster, Point(x, y)) <= self.get_stat("range") and self.caster.level.can_see(self.caster.x, self.caster.y, x, y)
+            return distance(self.caster, Point(x, y)) <= self.get_stat("range") and (not self.get_stat("requires_los") or self.caster.level.can_see(self.caster.x, self.caster.y, x, y))
 
     if cls is Approach:
 
@@ -3464,7 +3428,7 @@ def modify_class(cls):
     if cls is MonsterTeleport:
 
         def cast_instant(self, x, y):
-            randomly_teleport(self.caster, self.get_stat("range"), flash=True, requires_los=self.requires_los)
+            randomly_teleport(self.caster, self.get_stat("range"), flash=True, requires_los=self.self.get_stat("requires_los"))
 
     if cls is SimpleRangedAttack:
 
@@ -5828,31 +5792,59 @@ def modify_class(cls):
 
             return statholder.get_stat(base, self, attr)
 
-        def can_cast(self, x, y):
+        def get_corner_target(self, radius, requires_los=True):
+            # Find targets possibly around corners
+            # Returns the first randomly found target which will hit atleast one enemy with a splash of the given radius
 
-            if (not self.can_target_self) and (self.caster.x == x and self.caster.y == y):
-                return False
-
-            if (not self.can_target_empty) and (not self.caster.level.get_unit_at(x, y)):
-                return False
-
-            if self.must_target_walkable and not self.caster.level.can_walk(x, y):
-                return False
-
-            if self.must_target_empty and self.caster.level.get_unit_at(x, y):
-                return False
-
-            if self.caster.is_blind() and distance(Point(x, y), self.caster, diag=True) > 1:
-                return False
-
-            if not distance(Point(x, y), Point(self.caster.x, self.caster.y), diag=self.melee or self.diag_range) <= self.get_stat('range'):
-                return False
-
-            if self.get_stat('requires_los') > 0:
-                if not self.caster.level.can_see(self.caster.x, self.caster.y, x, y, light_walls=self.cast_on_walls):
+            dtypes = []
+            if hasattr(self, 'damage_type'):
+                if isinstance(self.damage_type, Tag):
+                    dtypes = [self.damage_type]
+                else:
+                    dtypes = self.damage_type
+            
+            def is_target(v):
+                if not are_hostile(self.caster, v):
                     return False
+                # if no damage type is specified, take any hostile target
+                if not dtypes:
+                    return True
+                for dtype in dtypes:
+                    if v.resists[dtype] < 100:
+                        return True
 
-            return True
+            nearby_enemies = self.caster.level.get_units_in_ball(self.caster, self.get_stat("range") + radius)
+            nearby_enemies = [u for u in nearby_enemies if is_target(u)]
+
+            possible_cast_points = list(self.caster.level.get_points_in_ball(self.caster.x, self.caster.y, self.get_stat("range")))
+
+            # Filter points that are not close to any enemies
+            potentials = []
+            for p in possible_cast_points:
+                for e in nearby_enemies:
+                    if distance(p, e, diag=False, euclidean=False) < radius:
+                        potentials.append(p)
+                        break
+
+            possible_cast_points = potentials
+
+            # Filter points that the spell cannot target
+            potentials = []
+            for p in possible_cast_points:
+                if self.can_cast(p.x, p.y):
+                    potentials.append(p)
+
+            possible_cast_points = potentials
+            random.shuffle(possible_cast_points)
+
+            def can_hit(p, u):
+                return distance(p, u, diag=False, euclidean=False) <= radius and (not self.get_stat("requires_los") or self.caster.level.can_see(p.x, p.y, u.x, u.y))
+
+            for p in possible_cast_points:
+                if not any(is_target(u) and can_hit(p, u) for u in self.owner.level.get_units_in_ball(p, radius)):
+                    continue
+                return p
+            return None
 
     if cls is Icicle:
 
