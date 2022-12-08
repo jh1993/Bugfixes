@@ -138,7 +138,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Ice Phoenix explosion now benefits from minion damage and radius bonuses.
 - Seraph auras now benefit from radius bonuses, and Essence Aura has a proper description.
 - Plague of Filth toads now benefit from minion range bonuses, and snake poison now benefit from duration bonuses.
-- Pyrostatic Hex now benefits from num targets bonuses, and Linear Conductance now works properly.
+- Pyrostatic Curse now benefits from num targets bonuses, and Linear Conductance now works properly. Newer instances of the buff will now replace older instances to reflect upgrades properly.
 - Multicast, Suspend Mortality, Holy Fire, Heaven's Wrath, Conductance descriptions updated with missing information.
 - All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
 - Void and Ice Drake spell descriptions now correctly reflect the spells' breath damage stats.

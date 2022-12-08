@@ -6528,6 +6528,7 @@ def modify_class(cls):
             self.name = "Pyrostatic Hex"
             self.beam = self.spell.get_stat("beam")
             self.buff_type = BUFF_TYPE_CURSE
+            self.stack_type = STACK_REPLACE
             self.color = Tags.Fire.color
             self.owner_triggers[EventOnDamaged] = self.on_damage
             self.asset = ['status', 'pyrostatic_hex']
