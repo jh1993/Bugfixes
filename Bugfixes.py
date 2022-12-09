@@ -333,9 +333,8 @@ def modify_class(cls):
             self.description = "The killer of this unit is inflicted with Mercurize."
 
         def on_death(self, evt):
-            # cast a Mercurize with the summoner's buffs
-            if evt.damage_event:
-                self.owner.level.queue_spell(self.spell.cast(evt.damage_event.source.owner.x, evt.damage_event.source.owner.y))
+            if evt.damage_event and evt.damage_event.source and evt.damage_event.source.owner:
+                evt.damage_event.source.owner.apply_buff(MercurizeBuff(self.spell), self.spell.get_stat("duration"))
 
     if cls is ThunderStrike:
 
