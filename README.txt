@@ -150,3 +150,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The AI now takes range and blindcasting bonuses into account when hitting targets around corners with spells that hit in a radius.
 - Even if an orb spell cannot melt through walls, it can now target tiles behind walls, since the orb will try to path-find around walls anyways.
 - Megavenom no longer skips enemies if some of them die during its effect.
+- On trials with enemy HP multipliers, Gemini Twin cloning now preserves current HP properly.
