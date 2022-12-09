@@ -148,3 +148,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Burning shrine no longer damages allies.
 - A color-coded phrase in a spell description display can now have its words split between multiple lines if it contains more than one word.
 - The AI now takes range and blindcasting bonuses into account when hitting targets around corners with spells that hit in a radius.
+- Even if an orb spell cannot melt through walls, it can now target tiles behind walls, since the orb will try to path-find around walls anyways.

@@ -3038,6 +3038,26 @@ def modify_class(cls):
 
     if cls is OrbSpell:
 
+        def can_cast(self, x, y):
+            if self.get_stat('orb_walk') and self.get_orb(x, y):
+                return True
+
+            if self.caster.level.tiles[x][y].is_wall():
+                return False
+
+            path = self.caster.level.get_points_in_line(Point(self.caster.x, self.caster.y), Point(x, y))
+            if len(path) < 2:
+                return False
+
+            start_point = path[1]
+            if self.caster.level.tiles[start_point.x][start_point.y].is_wall():
+                return False
+            blocker = self.caster.level.get_unit_at(start_point.x, start_point.y)
+            if blocker:
+                return False
+
+            return Spell.can_cast(self, x, y)
+
         def cast(self, x, y):
             existing = self.get_orb(x, y)
             if self.get_stat('orb_walk') and existing:
