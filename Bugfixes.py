@@ -1043,7 +1043,7 @@ def modify_class(cls):
                     if hasattr(spell, 'damage_type') and isinstance(spell.damage_type, Tag):
                         fmt = ' %d %s damage' % (spell.get_stat('damage'), spell.damage_type.name)
                     elif hasattr(spell, 'damage_type') and isinstance(spell.damage_type, list):
-                        fmt = ' %d %s damage' % (spell.damage, ' or '.join([t.name for t in spell.damage_type]))
+                        fmt = ' %d %s damage' % (spell.get_stat('damage'), ' or '.join([t.name for t in spell.damage_type]))
                     else:
                         fmt = ' %d damage' % spell.get_stat('damage')
                     lines = self.draw_wrapped_string(fmt, self.examine_display, cur_x, cur_y, self.examine_display.get_width() - 2*border_margin, color=COLOR_DAMAGE.to_tup())

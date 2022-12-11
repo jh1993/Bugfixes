@@ -152,3 +152,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Megavenom no longer skips enemies if some of them die during its effect.
 - On trials with enemy HP multipliers, Gemini Twin cloning now preserves current HP properly.
 - Eye buffs now update their damage values and other stats when you reapply them, instead of simply refreshing duration.
+- Non-player spells that have multiple damage types now display their damage stats correctly when there are damage bonuses.
