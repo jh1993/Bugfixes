@@ -153,5 +153,5 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - On trials with enemy HP multipliers, Gemini Twin cloning now preserves current HP properly.
 - Eye buffs now update their damage values and other stats when you reapply them, instead of simply refreshing duration.
 - Non-player spells that have multiple damage types now display their damage stats correctly when there are damage bonuses.
-- Melee attacks can now have randomized damage types. The UI display always implied that they could, except the game used to just crash if a melee attack was assigned randomized damage types.
+- Melee attacks, leap attacks, and burst attacks can now have randomized damage types. The UI display always implied that they could, except the game used to just crash if a melee attack was assigned randomized damage types.
 - The UI can now display attacks that deal all damage types instead of randomly one of the damage types.

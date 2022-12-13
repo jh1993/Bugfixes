@@ -3268,15 +3268,19 @@ def modify_class(cls):
 
     if cls is SimpleBurst:
 
-        def cast_instant(self, x, y):
-            for p in self.get_impacted_tiles(x, y):
-                if p.x == self.caster.x and p.y == self.caster.y:
-                    continue
-                self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), self.damage_type, self)
-                if self.onhit:
-                    unit = self.caster.level.get_unit_at(p.x, p.y)
-                    if unit:
-                        self.onhit(self.caster, unit)
+        def cast(self, x, y):
+            damage = self.get_stat("damage")
+            dtype = random.choice(self.damage_type) if isinstance(self.damage_type, list) else self.damage_type
+            for stage in Burst(self.caster.level, Point(x, y), self.get_stat('radius'), ignore_walls=self.ignore_walls):
+                for p in stage:
+                    if p.x == self.caster.x and p.y == self.caster.y:
+                        continue
+                    self.caster.level.deal_damage(p.x, p.y, damage, dtype, self)
+                    if self.onhit:
+                        unit = self.caster.level.get_unit_at(p.x, p.y)
+                        if unit:
+                            self.onhit(self.caster, unit)
+                yield
 
         def can_threaten(self, x, y):
             if distance(self.caster, Point(x, y)) > self.get_stat("radius"):
@@ -3305,6 +3309,7 @@ def modify_class(cls):
         def cast(self, x, y):
 
             # Projectile
+            dtype = random.choice(self.damage_type) if isinstance(self.damage_type, list) else self.damage_type
 
             leap_dest = self.get_leap_dest(x, y)
             if not leap_dest:
@@ -3313,11 +3318,11 @@ def modify_class(cls):
             path = self.caster.level.get_points_in_line(Point(self.caster.x, self.caster.y), Point(leap_dest.x, leap_dest.y), find_clear=not self.is_ghost)
             self.caster.level.act_move(self.caster, leap_dest.x, leap_dest.y, teleport=True)
             for point in path:
-                self.caster.level.leap_effect(point.x, point.y, self.damage_type.color, self.caster)
+                self.caster.level.leap_effect(point.x, point.y, dtype.color, self.caster)
                 yield
             self.caster.invisible = False
             charge_bonus = self.charge_bonus * (len(path) - 2)
-            self.caster.level.deal_damage(x, y, self.get_stat("damage") + charge_bonus, self.damage_type, self)
+            self.caster.level.deal_damage(x, y, self.get_stat("damage") + charge_bonus, dtype, self)
 
     if cls is MonsterVoidBeam:
 
