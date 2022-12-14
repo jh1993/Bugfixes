@@ -155,3 +155,5 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Non-player spells that have multiple damage types now display their damage stats correctly when there are damage bonuses.
 - Melee attacks, leap attacks, and burst attacks can now have randomized damage types. The UI display always implied that they could, except the game used to just crash if a melee attack was assigned randomized damage types.
 - The UI can now display attacks that deal all damage types instead of randomly one of the damage types.
+- If a unit gains stun immunity while stunned, the stun will be removed. Can't happen in vanilla but can happen in mods.
+- Shorter-duration blind will no longer overwrite longer-duration ones.
