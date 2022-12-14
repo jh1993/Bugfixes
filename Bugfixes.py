@@ -4197,6 +4197,9 @@ def modify_class(cls):
         def on_kill(self, unit):
             targets = self.owner.level.get_units_in_los(unit)
             targets = [t for t in targets if are_hostile(self.owner, t)]
+            if not targets:
+                return
+            random.shuffle(targets)
             duration = self.get_stat("duration")
             for u in targets[:self.get_stat("num_targets")]:
                 u.apply_buff(FrozenBuff(), duration)
