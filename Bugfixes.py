@@ -1960,7 +1960,7 @@ def modify_class(cls):
             else:
                 return None
 
-        def apply_buff(self, buff, duration=0, trigger_buff_apply_event=True):
+        def apply_buff(self, buff, duration=0, trigger_buff_apply_event=True, prepend=False):
             assert(isinstance(buff, Buff))
             
             # Do not apply buffs to dead units
@@ -2005,7 +2005,10 @@ def modify_class(cls):
             assert(isinstance(buff, Buff))
             buff.turns_left = duration
 
-            self.buffs.append(buff)
+            if prepend:
+                self.buffs.insert(0, buff)
+            else:
+                self.buffs.append(buff)
             result = buff.apply(self)
             if result == ABORT_BUFF_APPLY:
                 self.buffs.remove(buff)
@@ -2063,7 +2066,7 @@ def modify_class(cls):
 
         def effect_unit(self, unit):
             if Tags.Demon not in unit.tags and Tags.Undead not in unit.tags:
-                unit.apply_buff(BlindBuff(), 1)
+                unit.apply_buff(BlindBuff(), 1, prepend=unit is self.owner)
 
         def on_advance(self):
             for unit in self.owner.level.units:
