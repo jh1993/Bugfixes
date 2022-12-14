@@ -6657,6 +6657,7 @@ def modify_class(cls):
             self.name = "Blind"
             self.buff_type = BUFF_TYPE_CURSE
             self.asset = ['status', 'blind']
+            self.color = Tags.Holy.color
             self.description = "All spells reduced to melee range"
 
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
