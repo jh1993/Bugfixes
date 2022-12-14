@@ -159,3 +159,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Shorter-duration blind will no longer overwrite longer-duration ones.
 - Units with custom sprites now update their sprites properly if they gain transformation buffs.
 - Chaos Quill scribe scrolls spell now benefits from num summons bonuses.
+- Disperse can no longer crash the game if you have effects that automatically summon units when you cast the spell.
