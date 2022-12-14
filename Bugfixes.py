@@ -455,6 +455,26 @@ def modify_class(cls):
 
     if cls is PyGameView:
 
+        def get_anim(self, unit, forced_name=None):
+
+            # Find the asset name
+            if forced_name:
+                asset = ["char", forced_name]
+            else:
+                asset = get_unit_asset(unit)
+
+            # Determine lair colors for lairs
+            lair_colors = None
+            if unit.is_lair:
+                example_monster = unit.buffs[0].example_monster
+                example_sprite_name = example_monster.get_asset_name()
+                example_sprite = self.get_sprite_sheet(get_unit_asset(example_monster))
+                lair_colors = example_sprite.get_lair_colors()
+
+            sprite = self.get_sprite_sheet(asset, lair_colors=lair_colors)
+
+            return UnitSprite(unit, sprite, view=self)
+
         def draw_wrapped_string(self, string, surface, x, y, width, color=(255, 255, 255), center=False, indent=False, extra_space=False):
             lines = string.split('\n')
 

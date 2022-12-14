@@ -157,3 +157,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The UI can now display attacks that deal all damage types instead of randomly one of the damage types.
 - If a unit gains stun immunity while stunned, the stun will be removed. Can't happen in vanilla but can happen in mods.
 - Shorter-duration blind will no longer overwrite longer-duration ones.
+- Units with custom sprites now update their sprites properly if they gain transformation buffs.
