@@ -118,7 +118,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Mountain Mage and Earth Troll Magmancer quakeport can now only make floors, so they can no longer softlock the game. Dylan's previous implementation of only affecting "unimportant" floors didn't work, and I didn't want to work out the exact reason why.
 - Purity will no longer make the user debuffable after wearing off if the user was originally undebuffable.
 - Wolf bloodhound bloodrage duration, Giant Bear blood bear blood rage duration, and venom bear poison duration now benefit from duration bonuses, both the player's and their own.
-- Basic melee attacks that inflict debuffs on hit now benefit from duration bonuses.
+- Basic melee and ranged attacks that inflict debuffs on hit now benefit from duration bonuses.
 - If a unit is killed directly without dealing damage, its HP will be set to 0 and killed flag set to true before the death event is raised, which prevents the death event from erroneously thinking that the unit is still alive.
 - Mercurize poison aura upgrade now benefits from radius bonuses.
 - Fae Court description now correctly states that fairies have 50% arcane resistance instead of 75%, and that their heal have 2 more range than their attack. The fae queen's fairy and faethorn summons now have the same bonuses as fairies summoned by the spell itself.
@@ -160,3 +160,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Units with custom sprites now update their sprites properly if they gain transformation buffs.
 - Chaos Quill scribe scrolls spell now benefits from num summons bonuses.
 - Disperse can no longer crash the game if you have effects that automatically summon units when you cast the spell.
+- Venom Spit poison duration now benefits from duration bonuses.
