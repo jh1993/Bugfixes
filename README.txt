@@ -161,3 +161,4 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Chaos Quill scribe scrolls spell now benefits from num summons bonuses.
 - Disperse can no longer crash the game if you have effects that automatically summon units when you cast the spell.
 - Venom Spit poison duration now benefits from duration bonuses.
+- Last Word now works even if the last enemy in the level is deleted without counting as a kill.
