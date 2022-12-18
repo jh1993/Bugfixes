@@ -145,7 +145,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Fallen Angel no longer uses its Cacophony attack when no enemies are in radius.
 - Touch of Death description now has a clause saying its range cannot be increased.
 - Very long chains of Mercurial Vengeance can no longer crash the game when trying to save.
-- Burning shrine no longer damages allies.
 - A color-coded phrase in a spell description display can now have its words split between multiple lines if it contains more than one word.
 - The AI now takes range and blindcasting bonuses into account when hitting targets around corners with spells that hit in a radius.
 - Even if an orb spell cannot melt through walls, it can now target tiles behind walls, since the orb will try to path-find around walls anyways.
@@ -162,6 +161,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Disperse can no longer crash the game if you have effects that automatically summon units when you cast the spell.
 - Venom Spit poison duration now benefits from duration bonuses.
 - Last Word now works even if the last enemy in the level is deleted without counting as a kill.
+- Burning, Berserk, Enervation, Entropy, Storm Cloud, Cruel, Stoning and Toxic Agony shrines no longer trigger on allies.
+- Toxic Agony shrine can now be triggered by non-passive buff damage dealt by minions, and damage dealt by clouds spawned by minions.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
