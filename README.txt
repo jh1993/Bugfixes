@@ -162,3 +162,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Disperse can no longer crash the game if you have effects that automatically summon units when you cast the spell.
 - Venom Spit poison duration now benefits from duration bonuses.
 - Last Word now works even if the last enemy in the level is deleted without counting as a kill.
+
+Known bugs that cannot be fixed due to them being functions instead of class methods:
+- The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

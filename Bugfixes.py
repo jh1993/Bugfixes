@@ -15,6 +15,21 @@ import CommonContent, Spells
 import sys
 curr_module = sys.modules[__name__]
 
+def push(target, source, squares):
+    dir_x = target.x - source.x
+    dir_y = target.y - source.y
+
+    mag_sq = dir_x * dir_x + dir_y * dir_y
+    mag = math.sqrt(mag_sq)
+
+    dir_x = dir_x / mag
+    dir_y = dir_y / mag
+
+    dest_x = round(target.x + 3*squares*dir_x)
+    dest_y = round(target.y + 3*squares*dir_y)
+
+    return pull(target, Point(dest_x, dest_y), squares, find_clear=False)
+
 class RemoveBuffOnPreAdvance(Buff):
 
     def __init__(self, buff_class):
