@@ -165,6 +165,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Toxic Agony shrine can now be triggered by non-passive buff damage dealt by minions, and damage dealt by clouds spawned by minions.
 - The version of Thunder Strike used by enemies now displays its stun duration correctly.
 - The version of Chain Lightning used by enemies now correctly uses the cascade range stat, including bonuses.
+- Spell effects are now advanced properly if the player casts a spell that does not consume a turn. This functionality exists in the base game, but is unused outside of mods.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
