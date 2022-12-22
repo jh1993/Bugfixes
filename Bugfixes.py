@@ -4862,11 +4862,18 @@ def modify_class(cls):
             self.global_triggers[EventOnDamaged] = self.on_damaged
             self.radius = 4
 
+        def on_damaged(self, evt):
+            if not self.is_enhanced_spell(evt.source, allow_minion=True):
+                return
+            if are_hostile(self.owner, evt.unit):
+                return
+            self.owner.level.queue_spell(self.do_damage(evt.unit, evt.damage, evt.damage_type))
+
         def do_damage(self, target, damage, dtype):
             for unit in self.owner.level.get_units_in_ball(target, radius=self.get_stat("radius")):
                 if target != unit and are_hostile(self.owner, unit):
                     unit.deal_damage(damage, dtype, self)
-                yield
+            yield
 
         def get_description(self):
             return ("Whenever this spell or a minion it summoned deals damage to an allied unit, redeal that damage to all enemy units in a [{radius}_tile:radius] radius.").format(**self.fmt_dict())
