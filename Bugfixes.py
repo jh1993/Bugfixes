@@ -470,6 +470,105 @@ def modify_class(cls):
 
     if cls is PyGameView:
 
+        def draw_examine_upgrade(self):
+            path = ['UI', 'spell skill icons', self.examine_target.name.lower().replace(' ', '_') + '.png']
+            self.draw_examine_icon()
+
+            border_margin = self.border_margin
+            cur_x = border_margin
+            cur_y = border_margin
+
+            width = self.examine_display.get_width() - 2 * border_margin
+            lines = self.draw_wrapped_string(self.examine_target.name, self.examine_display, cur_x, cur_y, width=width)
+            cur_y += self.linesize * (lines+1)
+
+            # Draw upgrade tags
+            if not getattr(self.examine_target, 'prereq', None) and hasattr(self.examine_target, 'tags'):
+                for tag in Tags:
+                    if tag not in self.examine_target.tags:
+                        continue
+                    self.draw_string(tag.name, self.examine_display, cur_x, cur_y, (tag.color.r, tag.color.g, tag.color.b))
+                    cur_y += self.linesize
+                cur_y += self.linesize
+
+            if getattr(self.examine_target, 'level', None):
+                self.draw_string("level %d" % self.examine_target.level, self.examine_display, cur_x, cur_y)
+                cur_y += self.linesize
+
+            cur_y += self.linesize
+
+            is_passive = isinstance(self.examine_target, Upgrade) and not self.examine_target.prereq
+
+            # Autogen boring part of description
+            for tag, bonuses in self.examine_target.tag_bonuses.items():
+                for attr, val in bonuses.items():
+                    #cur_color = tag.color
+                    fmt = "%s spells and skills gain [%s_%s:%s]." % (tag.name, val, attr, attr)
+                    lines = self.draw_wrapped_string(fmt, self.examine_display, cur_x, cur_y, width=width)
+                    cur_y += (lines+1) * self.linesize
+                cur_y += self.linesize
+
+
+            for spell, bonuses in self.examine_target.spell_bonuses.items():
+                spell_ex = spell()
+
+                useful_bonuses = [(attr, val) for (attr, val) in bonuses.items() if hasattr(spell_ex, attr)]
+                if not useful_bonuses:
+                    continue
+
+                for attr, val in useful_bonuses:
+                    if attr in tooltip_colors:
+                        fmt = "%s gains [%s_%s:%s]" % (spell_ex.name, val, attr, attr)
+                    else:
+                        fmt = "%s gains %d %s" % (spell_ex.name, val, format_attr(attr))
+                    lines = self.draw_wrapped_string(fmt, self.examine_display, cur_x, cur_y, width=width)
+                    cur_y += (lines+1) * self.linesize
+                cur_y += self.linesize
+
+            for attr, val in self.examine_target.global_bonuses.items():
+                if val >= 0:
+                    fmt = "All spells and skills gain %d %s" % (val, format_attr(attr))
+                else:
+                    fmt = "All spells and skills lose %d %s" % (-val, format_attr(attr))
+                lines = self.draw_wrapped_string(fmt, self.examine_display, cur_x, cur_y, width)
+                cur_y += (lines+1) * self.linesize
+
+            has_resists = False
+            for tag in Tags:
+                if tag not in self.examine_target.resists or tag == Tags.Heal:
+                    continue
+                self.draw_string('%d%% Resist %s' % (self.examine_target.resists[tag], tag.name), self.examine_display, cur_x, cur_y, tag.color.to_tup())
+                has_resists = True
+                cur_y += self.linesize
+
+            if has_resists:
+                cur_y += self.linesize
+
+            amount = self.examine_target.resists[Tags.Heal]
+            if amount != 0:
+                if amount > 0:
+                    word = "Penalty"
+                else:
+                    amount *= -1
+                    word = "Bonus"
+                self.draw_string('%d%% Healing %s' % (amount, word), self.examine_display, cur_x, cur_y, Tags.Heal.color.to_tup())
+                cur_y += self.linesize*2
+
+            desc = self.examine_target.get_description()
+            if not desc:
+                desc = self.examine_target.get_tooltip()
+
+            # Warn player about replacing shrine buffs
+            if getattr(self.examine_target, 'shrine_name', None):
+                existing = [b for b in self.game.p1.buffs if isinstance(b, Upgrade) and b.prereq == self.examine_target.prereq and b.shrine_name and b != self.examine_target] 
+                if existing:
+                    if not desc:
+                        desc = ""
+                    desc += "\nWARNING: Will replace %s" % existing[0].name
+
+            if desc:
+                self.draw_wrapped_string(desc, self.examine_display, cur_x, cur_y, width, extra_space=True)
+
         def get_anim(self, unit, forced_name=None):
 
             # Find the asset name
@@ -1131,7 +1230,7 @@ def modify_class(cls):
                 has_resists = False
                 for tag in resist_tags:
                     
-                    if not ((self.examine_target.resists[tag] < 0) == negative):
+                    if not ((self.examine_target.resists[tag] < 0) == negative) or tag == Tags.Heal:
                         continue
 
                     self.draw_string('%d%% Resist %s' % (self.examine_target.resists[tag], tag.name), self.examine_display, cur_x, cur_y, tag.color.to_tup())
@@ -1140,6 +1239,16 @@ def modify_class(cls):
 
                 if has_resists:
                     cur_y += self.linesize
+
+            amount = self.examine_target.resists[Tags.Heal]
+            if amount != 0:
+                if amount > 0:
+                    word = "Penalty"
+                else:
+                    amount *= -1
+                    word = "Bonus"
+                self.draw_string('%d%% Healing %s' % (amount, word), self.examine_display, cur_x, cur_y, Tags.Heal.color.to_tup())
+                cur_y += self.linesize*2
 
             # Unit Passives
             for buff in unit.buffs:
@@ -1159,8 +1268,6 @@ def modify_class(cls):
                 lines = self.draw_wrapped_string(buff_desc, self.examine_display, cur_x, cur_y, self.examine_display.get_width() - 2*border_margin, buff_color)
                 cur_y += linesize * (lines+1)
 
-            cur_y += linesize
-
             status_effects = [b for b in self.examine_target.buffs if b.buff_type != BUFF_TYPE_PASSIVE]
             counts = {}
             for effect in status_effects:
@@ -1174,7 +1281,6 @@ def modify_class(cls):
 
 
             if status_effects:
-                cur_y += linesize
                 self.draw_string("Status Effects:", self.examine_display, cur_x, cur_y, (255, 255, 255))
                 cur_y += linesize
                 for buff_name, (buff, stacks, duration, color) in counts.items():
@@ -7044,9 +7150,14 @@ def modify_class(cls):
             # Target as if it were a fireball of radius arc_range
             return self.get_corner_target(self.get_stat("cascade_range"))
 
+    if cls is Poison:
+
+        def get_description(self):
+            return "Takes 1 poison damage each turn."
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, RingOfSpiders, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, CrystallographerActiveBuff, Necrostatics, NecrostaticStack, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, RingOfSpiders, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, CrystallographerActiveBuff, Necrostatics, NecrostaticStack, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison]:
     curr_module.modify_class(cls)
