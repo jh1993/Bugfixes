@@ -470,6 +470,16 @@ def modify_class(cls):
 
     if cls is PyGameView:
 
+        def get_draw_scale(self):
+
+            h_scale = pygame.display.get_surface().get_width()/RENDER_WIDTH
+            v_scale = pygame.display.get_surface().get_height()/RENDER_HEIGHT
+            scale = min(h_scale, v_scale)
+            # Return multiples of 0.5.
+            scale = math.floor(scale*2)/2
+            scale = max(scale, 0.5)
+            return scale
+
         def draw_examine_upgrade(self):
             path = ['UI', 'spell skill icons', self.examine_target.name.lower().replace(' ', '_') + '.png']
             self.draw_examine_icon()
