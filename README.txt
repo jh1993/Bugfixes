@@ -3,7 +3,7 @@ PLEASE CHECK THE DISCORD THREAD FOR UPDATE NOTICES, AND RE-DOWNLOAD THE MOD WHEN
 To install this mod, click on the green "Code" button on this page, then "Download ZIP". Please rename the "Bugfixes-main" folder to "Bugfixes" before putting it into your mods folder.
 
 This mod requires AAA_Loader by Bord Listian: https://github.com/DaedalusGame/AAA_Loader
-Visit the above link and install it the same way you install this mod, except that you rename the folder containing AAA_Loader.py as "AAA_Loader" before putting it into the mods folder.
+Visit the above link and install it the same way you install this mod, except that you rename the "AAA_Loader-master" folder to "AAA_Loader" before putting it into the mods folder.
 
 This mod may be partially incompatible with API_Universal until I make my own fork of it to work out the incompatibilities, which may be an annoying and tedious task so it may take a while. Until then, use API_Universal at your own risk.
 
