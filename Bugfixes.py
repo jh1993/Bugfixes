@@ -253,15 +253,27 @@ def fix_bloodghast_desc(unit):
     if unit.team == TEAM_ENEMY:
         unit.spells[0].description = "Gain +1 damage for 10 turns with each attack"
 
-def fix_giant_worm_ball(unit):
-    def summon_worms(caster, target):
-        worms = WormBall(5)
-        worms.team = caster.team
-        worms.source = caster.source
+def fix_onhit_summon(unit, spawner, index=0):
+    def summon_minion(caster, target):
+        minion = spawner()
+        minion.team = caster.team
+        minion.source = caster.source
+        apply_minion_bonuses(caster.source, minion)
         p = caster.level.get_summon_point(target.x, target.y, 1.5)
         if p:
-            caster.level.add_obj(worms, p.x, p.y)
-    unit.spells[0].onhit = summon_worms
+            caster.level.add_obj(minion, p.x, p.y)
+    unit.spells[index].onhit = summon_minion
+
+def fix_mischief_maker(unit):
+    def ThornTrouble(caster, target):
+        randomly_teleport(target, 3)
+        for _ in range(3):
+            thorn = FaeThorn()
+            thorn.team = caster.team
+            thorn.source = caster.source
+            apply_minion_bonuses(caster.source, thorn)
+            caster.level.summon(caster, thorn, target)
+    unit.spells[0].onhit = ThornTrouble
 
 bugged_units_fixer = {
     "Swamp Queen": lambda unit: setattr(unit.spells[2], "onhit", lambda caster, target: target.apply_buff(Poison(), 4)),
@@ -282,7 +294,13 @@ bugged_units_fixer = {
     "Glass Mushboom": fix_glass_mushboom_desc,
     "Frostfire Tormentor": lambda unit: setattr(unit.spells[1], "description", "Applies frozen for 1 turn"),
     "Deathchill Tormentor": lambda unit: setattr(unit.spells[0], "description", "Applies frozen for 1 turn"),
-    "Giant Worm Ball": fix_giant_worm_ball
+    "Giant Worm Ball": lambda unit: fix_onhit_summon(unit, lambda: WormBall(5)),
+    "Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn),
+    "Giant Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn),
+    "Micrognome": lambda unit: fix_onhit_summon(unit, FaeThorn),
+    "Iron Gnome": lambda unit: fix_onhit_summon(unit, IronThorn),
+    "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, 2),
+    "The Mischief Maker": fix_mischief_maker
 }
 
 class OakenBuff(Buff):
