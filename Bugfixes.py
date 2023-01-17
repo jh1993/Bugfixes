@@ -5175,8 +5175,20 @@ def modify_class(cls):
 
     if cls is DeathBolt:
 
+        def cast_instant(self, x, y):		
+            unit = self.caster.level.get_unit_at(x, y)
+            if unit and Tags.Living in unit.tags:
+                # Queue the skeleton raise as the first spell to happen after the damage so that it will pre-empt stuff like ghostfire
+                self.caster.level.queue_spell(self.try_raise(self.caster, unit))
+            damage = self.caster.level.deal_damage(x, y, self.get_stat('damage'), Tags.Dark, self)
+            if unit and damage and self.get_stat('wither') and Tags.Living not in unit.tags:
+                unit.max_hp -= damage
+                unit.max_hp = max(unit.max_hp, 1)
+
         def try_raise(self, caster, unit):
-            if unit and unit.cur_hp <= 0 and not self.caster.level.get_unit_at(unit.x, unit.y):
+            if unit and not unit.is_alive():
+                if self.get_stat('soulbattery'):
+                    self.damage += 1
                 skeleton = curr_module.raise_skeleton(caster, unit, source=self, summon=False)
                 if not skeleton:
                     return

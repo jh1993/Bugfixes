@@ -170,6 +170,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Healing resistance is now displayed on a separate line as healing penalty, and healing weakness as healing bonus.
 - The game now renders at multiples of 800x450 for all screen resolutions. Previously, it renders at 0.5x size if the resolution is smaller than 1600x900, but otherwise it renders at multiples of 1600x900.
 - For consistency, the damage bonus of Dragon Roar no longer benefits from the player's bonuses to damage.
+- Death Bolt Soul Battery now triggers in all circumstances when the skeleton raising will be triggered, instead of sometimes not triggering when multiple spells are queued at once.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
