@@ -172,6 +172,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - For consistency, the damage bonus of Dragon Roar no longer benefits from the player's bonuses to damage.
 - Death Bolt Soul Battery now triggers in all circumstances when the skeleton raising will be triggered, instead of sometimes not triggering when multiple spells are queued at once.
 - Spell effects created before the start of a unit's turn are now processed immediately instead of when the unit's turn ends.
+- The sorcery granted by the Elemental Spirits upgrade of The Restless Dead now benefits from minion bonuses.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
