@@ -253,7 +253,7 @@ def fix_bloodghast_desc(unit):
     if unit.team == TEAM_ENEMY:
         unit.spells[0].description = "Gain +1 damage for 10 turns with each attack"
 
-def fix_onhit_summon(unit, spawner, index=0):
+def fix_onhit_summon(unit, spawner, name):
     def summon_minion(caster, target):
         minion = spawner()
         minion.team = caster.team
@@ -262,7 +262,10 @@ def fix_onhit_summon(unit, spawner, index=0):
         p = caster.level.get_summon_point(target.x, target.y, 1.5)
         if p:
             caster.level.add_obj(minion, p.x, p.y)
-    unit.spells[index].onhit = summon_minion
+    for spell in unit.spells:
+        if spell.name == name:
+            spell.onhit = summon_minion
+            return
 
 def fix_mischief_maker(unit):
     def ThornTrouble(caster, target):
@@ -294,12 +297,12 @@ bugged_units_fixer = {
     "Glass Mushboom": fix_glass_mushboom_desc,
     "Frostfire Tormentor": lambda unit: setattr(unit.spells[1], "description", "Applies frozen for 1 turn"),
     "Deathchill Tormentor": lambda unit: setattr(unit.spells[0], "description", "Applies frozen for 1 turn"),
-    "Giant Worm Ball": lambda unit: fix_onhit_summon(unit, lambda: WormBall(5)),
-    "Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn),
-    "Giant Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn),
-    "Micrognome": lambda unit: fix_onhit_summon(unit, FaeThorn),
-    "Iron Gnome": lambda unit: fix_onhit_summon(unit, IronThorn),
-    "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, 2),
+    "Giant Worm Ball": lambda unit: fix_onhit_summon(unit, lambda: WormBall(5), "Spit Worms"),
+    "Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
+    "Giant Gnome": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
+    "Micrognome": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
+    "Iron Gnome": lambda unit: fix_onhit_summon(unit, IronThorn, "Iron Thorn Bolt"),
+    "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
     "The Mischief Maker": fix_mischief_maker
 }
 
