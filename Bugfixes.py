@@ -197,7 +197,6 @@ class RotBuff(Buff):
         self.name = "Hollow Flesh"
         self.asset = ['status', 'rot']
         self.buff_type = BUFF_TYPE_CURSE
-        self.frac = 1 - self.spell.get_stat('max_health_loss')/100
         self.resists[Tags.Dark] = 100
         self.resists[Tags.Holy] = -100
         self.resists[Tags.Fire] = -self.spell.get_stat('fire_vulnerability')
@@ -206,9 +205,8 @@ class RotBuff(Buff):
         self.originally_undead = False
 
     def on_applied(self, owner):
-        self.owner.max_hp = math.floor(self.owner.max_hp*self.frac)
-        self.owner.max_hp = max(self.owner.max_hp, 1)
-        self.owner.cur_hp = min(self.owner.cur_hp, self.owner.max_hp)
+        self.hp = math.floor(self.owner.max_hp*self.spell.get_stat('max_health_loss')/100)
+        drain_max_hp(self.owner, self.hp)
         if Tags.Living in self.owner.tags:
             self.owner.tags.remove(Tags.Living)
             self.originally_living = True
@@ -218,7 +216,7 @@ class RotBuff(Buff):
             self.owner.tags.append(Tags.Undead)
     
     def on_unapplied(self):
-        self.owner.max_hp = math.ceil(self.owner.max_hp/self.frac)
+        self.owner.max_hp += self.hp
         if not self.originally_undead and Tags.Undead in self.owner.tags:
             self.owner.tags.remove(Tags.Undead)
         if self.originally_living and Tags.Living not in self.owner.tags:
