@@ -5715,10 +5715,15 @@ def modify_class(cls):
             self.tags = [Tags.Chaos, Tags.Sorcery]
             self.level = 2
 
-            self.upgrades['cascade'] =  (1, 3, 'Cascade', 'Hits from Annihilate will jump to targets up to [4_tiles:cascade_range] away if the main target is killed or if targeting an empty tile.\nThis ignores line of sight and benefits from bonuses to [cascade_range:cascade_range].')
-            self.upgrades['dark'] =  (1, 1, 'Dark Annihilation', 'Annihilate deals an additional dark damage hit')
-            self.upgrades['arcane'] =  (1, 1, 'Arcane Annihilation', 'Annihilate deals an additional arcane damage hit')
+            self.upgrades['cascade'] =  (1, 3, 'Cascade', 'Hits from Annihilate will jump to targets up to [{cascade_range}_tiles:cascade_range] away if the main target is killed or if targeting an empty tile. This ignores line of sight.')
+            self.upgrades['dark'] =  (1, 1, 'Dark Annihilation', 'Annihilate deals an additional [dark] damage hit')
+            self.upgrades['arcane'] =  (1, 1, 'Arcane Annihilation', 'Annihilate deals an additional [arcane] damage hit')
             self.upgrades['max_charges'] = (4, 2)
+
+        def fmt_dict(self):
+            stats = Spell.fmt_dict(self)
+            stats["cascade_range"] = self.get_stat("cascade_range", base=4)
+            return stats
 
         def cast(self, x, y):
             
@@ -5738,10 +5743,7 @@ def modify_class(cls):
                     other_targets = [t for t in other_targets if self.caster.level.are_hostile(t, self.caster)]
                     if other_targets:
                         cur_target = random.choice(other_targets)
-
                 self.caster.level.deal_damage(cur_target.x, cur_target.y, damage, dtype, self)
-                for i in range(9):
-                    yield
 
     if cls is MegaAnnihilateSpell:
 
@@ -5753,9 +5755,9 @@ def modify_class(cls):
             self.tags = [Tags.Chaos, Tags.Sorcery]
             self.level = 5
 
-            self.upgrades['cascade'] =  (1, 3, 'Cascade', 'Hits from Annihilate will jump to targets up to [4_tiles:cascade_range] away if the main target is killed or if targeting an empty tile.\nThis ignores line of sight and benefits from bonuses to [cascade_range:cascade_range].')
-            self.upgrades['dark'] =  (1, 2, 'Dark Annihilation', 'Annihilate deals an additional dark damage hit')
-            self.upgrades['arcane'] =  (1, 2, 'Arcane Annihilation', 'Annihilate deals an additional arcane damage hit')
+            self.upgrades['cascade'] =  (1, 3, 'Cascade', 'Hits from Mega Annihilate will jump to targets up to [{cascade_range}_tiles:cascade_range] away if the main target is killed or if targeting an empty tile. This ignores line of sight.')
+            self.upgrades['dark'] =  (1, 2, 'Dark Annihilation', 'Mega Annihilate deals an additional [dark] damage hit')
+            self.upgrades['arcane'] =  (1, 2, 'Arcane Annihilation', 'Mega Annihilate deals an additional [arcane] damage hit')
             self.upgrades['damage'] = (99, 4)
 
     if cls is MeltBuff:
