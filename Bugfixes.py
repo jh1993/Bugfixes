@@ -301,7 +301,8 @@ bugged_units_fixer = {
     "Micrognome": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
     "Iron Gnome": lambda unit: fix_onhit_summon(unit, IronThorn, "Iron Thorn Bolt"),
     "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
-    "The Mischief Maker": fix_mischief_maker
+    "The Mischief Maker": fix_mischief_maker,
+    "Faery Arcanist": lambda unit: setattr(unit, "flying", True)
 }
 
 class OakenBuff(Buff):
