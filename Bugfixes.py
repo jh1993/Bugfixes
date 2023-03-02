@@ -5250,7 +5250,7 @@ def modify_class(cls):
     if cls is ChannelBuff:
 
         def on_applied(self, owner):
-            self.should_repeat = False
+            self.first_pre_advance = False
             self.channel_turns = 0
             self.max_channel = self.turns_left
 
@@ -5263,7 +5263,8 @@ def modify_class(cls):
                 self.owner.level.queue_spell(self.spell(self.spell_target.x, self.spell_target.y, channel_cast=True), prepend=True)
 
         def on_pre_advance(self):
-            self.should_repeat = True
+            self.passed = False
+            self.first_pre_advance = True
 
         def on_advance(self):
 
@@ -5279,7 +5280,7 @@ def modify_class(cls):
                     return
 
             cast = False
-            if not self.cast_after_channel and self.should_repeat:
+            if not self.cast_after_channel and self.first_pre_advance:
                 cast = True
                 self.owner.level.queue_spell(self.spell(self.spell_target.x, self.spell_target.y, channel_cast=True), prepend=True)
 
@@ -5289,8 +5290,6 @@ def modify_class(cls):
 
             if cast and self.owner.is_player_controlled:
                 self.owner.level.show_effect(0, 0, Tags.Sound_Effect, 'sorcery_ally')
-
-            self.passed = False
 
     if cls is DeathCleaveBuff:
 
