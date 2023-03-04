@@ -177,6 +177,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Giant fire bomber explosion now has the correct damage type for the purpose of UI display and AI targeting.
 - Hypocrisy of the same damage type can no longer erroneously stack if you cast more than one spell in a turn.
 - Faery arcanists are now flying.
+- Magnetize now determines whether it's a buff or debuff before it's applied, which makes it behave correctly on units that are immune to buffs or debuffs.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
