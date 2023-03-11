@@ -2124,13 +2124,6 @@ def modify_class(cls):
 
     if cls is Unit:
 
-        def is_stunned(self):
-            # Skip action if stunned, but advance buffs first.
-            for b in self.buffs:
-                if not b.on_attempt_advance():
-                    return True
-            return False
-
         def deal_damage(self, amount, damage_type, spell, penetration=0):
             if not self.is_alive():
                 return 0
