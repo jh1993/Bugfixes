@@ -6110,23 +6110,26 @@ def modify_class(cls):
     if cls is SlimeBuff:
 
         def on_advance(self):
-            if random.random() < .5:
+            if random.random() >= .5:
+                if self.owner.cur_hp == self.owner.max_hp:
+                    self.owner.max_hp += self.growth
+                self.owner.deal_damage(-self.growth, Tags.Heal, self)
+           
+            if self.owner.cur_hp < self.to_split:
                 return
-
-            if self.owner.cur_hp == self.owner.max_hp:
-                self.owner.max_hp += self.growth
-            self.owner.deal_damage(-self.growth, Tags.Heal, self)
-            if self.owner.cur_hp >= self.to_split:
-
+            
+            single = self.to_split//2
+            while self.owner.max_hp >= self.to_split:
                 p = self.owner.level.get_summon_point(self.owner.x, self.owner.y)
-                if p:
-                    self.owner.max_hp //= 2
-                    self.owner.cur_hp //= 2
-                    unit = self.spawner()
-                    unit.team = self.owner.team
-                    if not unit.source:
-                        unit.source = self.owner.source
-                    self.owner.level.add_obj(unit, p.x, p.y)
+                if not p:
+                    return
+                self.owner.max_hp -= single
+                self.owner.cur_hp = self.owner.max_hp
+                unit = self.spawner()
+                unit.team = self.owner.team
+                if not unit.source:
+                    unit.source = self.owner.source
+                self.owner.level.add_obj(unit, p.x, p.y)
 
     if cls is Bolt:
 
