@@ -3971,6 +3971,11 @@ def modify_class(cls):
         def get_tooltip_color(self):
             return Tags.Heal.color
 
+        def on_advance(self):
+            if not self.recently_burned:
+                self.owner.deal_damage(-5, Tags.Heal, self)
+            self.recently_burned = False
+
     if cls is DamageAuraBuff:
 
         def __init__(self, damage, damage_type, radius, friendly_fire=False, melt_walls=False):
@@ -4013,6 +4018,9 @@ def modify_class(cls):
             self.buff_type = BUFF_TYPE_BLESS
             self.asset = ['status', 'heal']
             self.color = Tags.Heal.color
+
+        def on_advance(self):
+            self.owner.deal_damage(-self.heal, Tags.Heal, self)
 
     if cls is ShieldRegenBuff:
 
@@ -7288,9 +7296,78 @@ def modify_class(cls):
 
             self.summon(unit, target=Point(x, y))
 
+    if cls is MinionRepair:
+
+        def on_advance(self):
+            for unit in self.owner.level.units:
+                if unit != self.owner and not self.owner.level.are_hostile(unit, self.owner):
+                    unit.deal_damage(-2, Tags.Heal, self)
+
+    if cls is HealAuraBuff:
+
+        def on_advance(self):
+            if self.whole_map:
+                units = list(self.owner.level.units)
+            else:
+                units = list(self.owner.level.get_units_in_ball(Point(self.owner.x, self.owner.y), self.radius))
+
+            for unit in units:
+                if unit.is_player_controlled and not self.can_heal_player:
+                    continue
+
+                if unit == self.owner:
+                    continue
+
+                if self.owner.level.are_hostile(self.owner, unit):
+                    continue
+
+                unit.deal_damage(-self.heal, Tags.Heal, self)
+
+    if cls is HealMinionsSpell:
+
+        def cast(self, x, y):
+
+            for unit in self.caster.level.get_units_in_los(self.caster):
+                if not self.caster.level.are_hostile(self.caster, unit) and unit != self.caster:
+
+                    # Dont heal the player if a gold drake is casting
+                    if unit.is_player_controlled:
+                        continue
+
+                    unit.deal_damage(-self.get_stat('heal'), Tags.Heal, self)
+                    
+                    if self.get_stat('shields'):
+                        unit.add_shields(1)
+                    yield
+
+    if cls is AngelSong:
+
+        def cast_instant(self, x, y):
+            for unit in self.caster.level.get_units_in_ball(Point(x, y), self.get_stat('radius')):
+                if unit.is_player_controlled:
+                    continue
+                if (Tags.Living in unit.tags or Tags.Holy in unit.tags):
+                    unit.deal_damage(-self.get_stat('heal'), Tags.Heal, self)
+                if Tags.Dark in unit.tags or Tags.Undead in unit.tags or Tags.Demon in unit.tags:
+                    unit.deal_damage(self.get_stat('damage'), Tags.Fire, self)
+                    unit.deal_damage(self.get_stat('damage'), Tags.Holy, self)
+
+    if cls is FaestoneBuff:
+
+        def on_cast(self, evt):
+            if evt.caster != self.master:
+                return
+
+            if Tags.Arcane in evt.spell.tags:
+
+                self.owner.level.queue_spell(self.teleport(Point(evt.x, evt.y)))
+
+            if Tags.Nature in evt.spell.tags:
+                self.owner.deal_damage(-self.healing, Tags.Heal, self)
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, ConductanceSpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, Approach, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, IceSprigganShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, DeathchillChimeraShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff]:
     curr_module.modify_class(cls)
