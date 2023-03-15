@@ -181,6 +181,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The game no longer crashes if you gain a tag-specific bonus to blindcasting. Not possible in the base game but possible with mods.
 - If a slime gains more max HP than the amount needed to split, it will now shed as much excess HP as possible and produce the appropriate number of new slimes, instead of losing half HP and only producing one new slime.
 - Regen, troll regen, Regeneration Aura, Minion Regeneration, Healing Light, Choir of Angels, and Faestone now try to heal their respective targets even when said targets are at full HP, for the purpose of modded effects that proc on attempted healing.
+- Added a functionality to not automatically display the resistance and stat bonuses given by a skill, in cases where doing so will block out the skill description.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
