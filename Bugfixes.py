@@ -2387,15 +2387,19 @@ def modify_class(cls):
                         unit.pre_advance()
                         while self.can_advance_spells():
                             yield self.advance_spells()
+                        if not unit.is_alive():
+                            continue
 
                         finished_advance = False
-                        while not finished_advance:
+                        while not finished_advance and unit.is_alive():
                             if unit.is_player_controlled and not unit.is_stunned() and not self.requested_action:
                                 self.is_awaiting_input = True
                                 yield
                             finished_advance = unit.advance()
                             while self.can_advance_spells():
                                 yield self.advance_spells()
+                        if not unit.is_alive():
+                            continue
 
                         # Advance buffs after advancing spells
                         unit.advance_buffs()
