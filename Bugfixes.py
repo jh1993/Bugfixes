@@ -3153,7 +3153,7 @@ def modify_class(cls):
                 if not skeleton:
                     return
                 skeleton.spells[0].damage = self.spell.get_stat('minion_damage')
-                self.spell.summon(skeleton, target=unit, radius=0)
+                self.spell.summon(skeleton, target=unit)
                 yield
 
         def grant_sorcery(self, unit):
