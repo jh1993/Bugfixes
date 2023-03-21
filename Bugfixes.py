@@ -83,10 +83,13 @@ class MinionBuffAura(Buff):
         self.color = example.color
         self.global_triggers[EventOnUnitAdded] = self.on_unit_added
         self.buff_dict = defaultdict(lambda: None)
+        self.advanced = False
+        # Only used for when a unit is summoned while this buff has only 1 turn left.
+        self.ignored_units = []
 
     def modify_unit(self, unit, duration):
 
-        if are_hostile(self.owner, unit) or (unit is self.owner):
+        if are_hostile(self.owner, unit) or (unit is self.owner) or unit in self.ignored_units:
             return
         if not self.qualifies(unit):
             return
@@ -95,20 +98,31 @@ class MinionBuffAura(Buff):
             self.buff_dict.pop(unit)
             return
 
+        if duration <= 0:
+            self.ignored_units.append(unit)
+            return
+        
         if unit not in self.buff_dict.keys() or not self.buff_dict[unit] or not self.buff_dict[unit].applied:
             buff = self.buff_class()
             unit.apply_buff(buff, duration)
             self.buff_dict[unit] = buff
 
+    def on_pre_advance(self):
+        self.advanced = False
+
     def on_unit_added(self, evt):
-        self.modify_unit(evt.unit, self.turns_left - 1)
+        self.modify_unit(evt.unit, self.turns_left - (1 if not self.advanced else 0))
     
     def on_advance(self):
+        self.advanced = True
         for unit in list(self.buff_dict.keys()):
             if not unit.is_alive():
                 self.buff_dict.pop(unit)
         for unit in list(self.owner.level.units):
+            if unit in self.ignored_units:
+                continue
             self.modify_unit(unit, self.turns_left)
+        self.ignored_units = []
 
 def raise_skeleton(owner, unit, source=None, summon=True):
     if unit.has_been_raised:
