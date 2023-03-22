@@ -184,6 +184,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Added a functionality to not automatically display the resistance and stat bonuses given by a skill, in cases where doing so will block out the skill description.
 - The game no longer crashes if a unit dies at the start of its turn or while using an action that doesn't take a turn.
 - Soul jarring is no longer removed if the soul jar dies while having reincarnations.
+- Voidflame Lantern starcharged damage is now attributed to the skill itself instead of the buff.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
