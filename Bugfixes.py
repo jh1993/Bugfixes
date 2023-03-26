@@ -230,11 +230,15 @@ class RotBuff(Buff):
             self.owner.tags.append(Tags.Undead)
     
     def on_unapplied(self):
+        self.owner.level.queue_spell(self.unmodify_unit())
+
+    def unmodify_unit(self):
         self.owner.max_hp += self.hp
         if not self.originally_undead and Tags.Undead in self.owner.tags:
             self.owner.tags.remove(Tags.Undead)
         if self.originally_living and Tags.Living not in self.owner.tags:
             self.owner.tags.append(Tags.Living)
+        yield
 
 def fix_unit(unit):
     if unit.name in bugged_units_fixer.keys():
