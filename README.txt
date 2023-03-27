@@ -186,6 +186,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Soul jarring is no longer removed if the soul jar dies while having reincarnations.
 - Voidflame Lantern starcharged damage is now attributed to the skill itself instead of the buff.
 - Scalespinner is no longer triggered by the breath weapons of non-dragon minions.
+- Faestone now still gains 1 SH even when it fails to find a teleport destination.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

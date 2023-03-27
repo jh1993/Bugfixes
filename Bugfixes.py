@@ -7387,6 +7387,13 @@ def modify_class(cls):
             if Tags.Nature in evt.spell.tags:
                 self.owner.deal_damage(-self.healing, Tags.Heal, self)
 
+        def teleport(self, target):
+            dest = self.owner.level.get_summon_point(target.x, target.y, radius_limit=4)
+            if dest:
+                self.owner.level.act_move(self.owner, dest.x, dest.y, teleport=True)
+            self.owner.add_shields(1)
+            yield
+
     if cls is Soulbound:
 
         def __init__(self, guardian):
