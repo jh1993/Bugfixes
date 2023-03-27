@@ -3704,15 +3704,13 @@ def modify_class(cls):
             return list(self.caster.level.get_points_in_ball(self.caster.x, self.caster.y, self.get_stat("radius")))
 
         def cast_instant(self, x, y):
+            damage = self.get_stat("damage")
             for p in self.get_impacted_tiles(x, y):
                 unit = self.caster.level.get_unit_at(p.x, p.y)
-                if unit and not are_hostile(self.caster, unit):
-                    continue
-
-                if not self.caster.level.tiles[p.x][p.y].can_see:
-                    continue
-
-                self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), Tags.Dark, self)
+                if not unit or not are_hostile(self.caster, unit):
+                    self.caster.level.show_effect(p.x, p.y, self.damage_type)
+                else:
+                    unit.deal_damage(damage, self.damage_type, self)
 
         def get_ai_target(self):
             for p in self.get_impacted_tiles(self.caster.x, self.caster.y):

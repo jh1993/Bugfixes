@@ -143,6 +143,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - All spell upgrade descriptions have been changed to dynamically reflect stat bonuses, like spell descriptions themselves do.
 - Void and Ice Drake spell descriptions now correctly reflect the spells' breath damage stats.
 - Fallen Angel no longer uses its Cacophony attack when no enemies are in radius.
+- Fallen Angel Cacophony now shows a visual effect even on blank tiles or tiles occupied by allies, for a more consistent look.
 - Touch of Death description now has a clause saying its range cannot be increased.
 - Very long chains of Mercurial Vengeance can no longer crash the game when trying to save.
 - A color-coded phrase in a spell description display can now have its words split between multiple lines if it contains more than one word.
