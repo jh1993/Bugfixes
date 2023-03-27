@@ -7428,6 +7428,23 @@ def modify_class(cls):
                 target.deal_damage(self.spell.get_stat('damage'), dtype, self.spell)
                 available_targets.remove(target)
 
+    if cls is DragonScalesSkill:
+
+        def on_spell_cast(self, evt):
+            if not isinstance(evt.spell, BreathWeapon) or Tags.Dragon not in evt.caster.tags:
+                return
+            if are_hostile(evt.caster, self.owner):
+                return
+            if evt.caster == self.owner:
+                return
+            for u in self.owner.level.units:
+                if are_hostile(u, self.owner):
+                    continue
+                if u.is_player_controlled:
+                    continue
+                buff = DragonScalesBuff(evt.spell.damage_type)
+                u.apply_buff(buff, self.get_stat('duration'))
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
