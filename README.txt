@@ -188,6 +188,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Voidflame Lantern starcharged damage is now attributed to the skill itself instead of the buff.
 - Scalespinner is no longer triggered by the breath weapons of non-dragon minions.
 - Faestone now still gains 1 SH even when it fails to find a teleport destination.
+- Damage dealt by debuffs that aren't associated with spells or skills (usually poison) is now displayed properly at the end of a level, instead of erroneously attributing the damage to the victims of the debuffs (e.g. damage you take from the poison debuff being attributed to yourself).
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

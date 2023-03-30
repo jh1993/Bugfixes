@@ -2494,23 +2494,16 @@ def modify_class(cls):
 
             if (amount > 0):
 
-                # Record damage for post level summary
-                if source.owner and source.owner != self.player_unit:
-                    source_key = "%s (%s)" % (source.name, source.owner.name)
-                    self.damage_taken_sources
-                else:
-                    source_key = "%s" % source.name
-
                 # Record damage sources when a player unit exists (aka not in unittests)
                 if self.player_unit:
                     if are_hostile(unit, self.player_unit):
                         key = source.name
-                        if source.owner and source.owner.source:
+                        if not(isinstance(source, Buff) and source.buff_type == BUFF_TYPE_CURSE) and source.owner and source.owner.source:
                             key = source.owner.name
 
                         self.damage_dealt_sources[key] += amount
                     elif unit == self.player_unit:
-                        if source.owner:
+                        if source.owner and not(isinstance(source, Buff) and source.buff_type == BUFF_TYPE_CURSE):
                             key = source.owner.name
                         else:
                             key = source.name	
