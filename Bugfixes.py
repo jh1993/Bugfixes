@@ -476,19 +476,13 @@ def modify_class(cls):
     if cls is OrbBuff:
 
         def on_advance(self):
-            # first advance: Radiate around self, do not move
-            if self.first:
-                self.first = False
-                self.spell.on_orb_move(self.owner, self.owner)
 
             path = None
-            if not self.spell.get_stat('melt_walls'):
-                path = self.owner.level.find_path(self.owner, self.dest, self.owner, pythonize=True)
-            else:
-                path = self.owner.level.get_points_in_line(self.owner, self.dest)[1:]
             next_point = None
-            if path:
-                next_point = path[0]
+            if not self.owner.is_stunned():
+                path = self.owner.level.find_path(self.owner, self.dest, self.owner, pythonize=True, melt_walls=self.spell.get_stat('melt_walls'))
+                if path:
+                    next_point = path[0]
 
             # Melt wall if needed
             if next_point and self.owner.level.tiles[next_point.x][next_point.y].is_wall() and self.spell.get_stat('melt_walls'):
@@ -2142,6 +2136,12 @@ def modify_class(cls):
 
     if cls is Unit:
 
+        def is_stunned(self):
+            # Skip action if stunned, but advance buffs first.
+            for b in self.buffs:
+                if not b.on_attempt_advance():
+                    return True
+
         def deal_damage(self, amount, damage_type, spell, penetration=0):
             if not self.is_alive():
                 return 0
@@ -2369,6 +2369,59 @@ def modify_class(cls):
             self.caster.apply_buff(buff, self.get_stat('duration'))
 
     if cls is Level:
+
+        def find_path(self, start, target, pather, pythonize=False, cosmetic=False, melt_walls=False):
+            
+            # Early out if the pather is surrounded by units and walls
+            # If the unit cannot move, we dont care how it should move
+            # Do not do this for cosmetic paths- they can step over units, and are infrequently called anyways
+            if not cosmetic:
+                boxed_in = True
+                for p in self.get_adjacent_points(start, filter_walkable=False):
+                    if self.can_stand(p.x, p.y, pather):
+                        boxed_in = False
+                        break
+
+                if boxed_in:
+                    return None
+
+            def path_func(xFrom, yFrom, xTo, yTo, userData):
+                tile = self.tiles[xTo][yTo]
+                
+                if tile.is_wall():
+                    if not melt_walls:
+                        return 0.0
+                elif tile.is_chasm:
+                    if not pather.flying:
+                        return 0.0
+                
+                blocker_unit = tile.unit
+
+                if not blocker_unit:
+                    if tile.prop:
+                        # player pathing avoids props unless prop is the target
+                        if (isinstance(tile.prop, Portal) or isinstance(tile.prop, Shop)) and pythonize and not (xTo == target.x and yTo == target.y):
+                            return 0.0
+                        # creatuers slight preference to avoid props
+                        return 1.1
+                    else:
+                        return 1.0
+                if blocker_unit.stationary:
+                    return 50.0
+                else:
+                    return 5.0
+
+
+            path = libtcod.path_new_using_function(self.width, self.height, path_func)
+            libtcod.path_compute(path, start.x, start.y, target.x, target.y)
+            if pythonize:
+                ppath = []
+                for i in range(libtcod.path_size(path)):
+                    x, y = libtcod.path_get(path, i)
+                    ppath.append(Point(x, y))
+                libtcod.path_delete(path)
+                return ppath
+            return path
 
         def iter_frame(self, mark_turn_end=False):
             # An iterator representing the order of turns for all game objects
