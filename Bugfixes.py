@@ -3680,7 +3680,7 @@ def modify_class(cls):
         def cast_instant(self, x, y):
             for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]:
                 self.caster.level.deal_damage(p.x, p.y, self.get_stat("damage"), self.damage_type, self)
-                self.caster.level.add_obj(StormCloud(self.caster, self.damage), p.x, p.y)
+                self.caster.level.add_obj(StormCloud(self.caster, self.get_stat("damage")), p.x, p.y)
 
     if cls is LifeDrain:
 
