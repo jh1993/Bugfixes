@@ -3372,7 +3372,7 @@ def modify_class(cls):
             if self.get_stat('orb_walk') and self.get_orb(x, y):
                 return True
 
-            if self.caster.level.tiles[x][y].is_wall():
+            if self.caster.level.tiles[x][y].is_wall() and not self.get_stat('melt_walls'):
                 return False
 
             path = self.caster.level.get_points_in_line(Point(self.caster.x, self.caster.y), Point(x, y))
@@ -3380,7 +3380,7 @@ def modify_class(cls):
                 return False
 
             start_point = path[1]
-            if self.caster.level.tiles[start_point.x][start_point.y].is_wall():
+            if self.caster.level.tiles[start_point.x][start_point.y].is_wall() and not self.get_stat('melt_walls'):
                 return False
             blocker = self.caster.level.get_unit_at(start_point.x, start_point.y)
             if blocker:
