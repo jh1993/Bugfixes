@@ -5007,7 +5007,7 @@ def modify_class(cls):
         def get_stat(self, attr, base=None):
             buff = None
             if self.caster:
-                buff = self.caster.get_buff(FireBomberBuff)
+                buff = self.caster.get_buff(VoidBomberBuff)
             if buff and attr == "range":
                 return self.get_stat("radius", base=buff.radius)
             return Spell.get_stat(self, attr, base)
