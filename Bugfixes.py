@@ -4802,6 +4802,7 @@ def modify_class(cls):
                 egg = IceWyrmEgg()
             apply_minion_bonuses(self, egg)
             egg.buffs[0].spawner = lambda: get_wyrm(self, FireWyrm() if flip else IceWyrm())
+            egg.buffs[0].apply_bonuses = False
             self.summon(egg, target=evt)
             yield
 
