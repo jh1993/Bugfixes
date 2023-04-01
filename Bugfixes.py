@@ -6439,6 +6439,13 @@ def modify_class(cls):
 
     if cls is WizardIcicle:
 
+        def on_init(self):
+            self.name = "Icicle"
+            self.damage = 4
+            self.range = 6
+            self.all_damage_types = True
+            self.damage_type = [Tags.Physical, Tags.Ice]
+
         def cast(self, x, y):
             i = 0
             for point in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:-1]:
