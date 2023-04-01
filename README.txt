@@ -193,6 +193,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - An orb now pathfinds properly if it can melt walls but the most direct path to its destination is blocked by a unit.
 - Orbs no longer move when stunned.
 - When the game checks whether a unit is stunned, it now checks all of the unit's buffs to see if any of them prevent action, not just if any of them is a subtype of the stun debuff.
+- Black Rider Tide of Rot now benefits from duration bonuses.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
