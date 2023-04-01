@@ -2282,7 +2282,7 @@ def modify_class(cls):
                 unit.apply_buff(BlindBuff(), 1, prepend=unit is self.owner)
 
         def on_advance(self):
-            for unit in self.owner.level.units:
+            for unit in list(self.owner.level.units):
                 self.effect_unit(unit)
 
         on_applied = lambda self, owner: None

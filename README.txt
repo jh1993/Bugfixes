@@ -37,6 +37,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - All furnace units now properly have the fire tag, and all copper units properly have the lightning tag.
 - Hollow Flesh is now properly classified as a debuff, and removing it properly restores the original unit's tags, resists, and max HP.
 - Darkness no longer removes blindness when it expires.
+- Darkness no longer skips units if a unit somehow dies while it's applying blind. Can't happen in the base game but can happen with mods.
 - Venom Spit and Hungry Dead now properly set their owner fields when adding their respective spells. This causes them to properly count as damage done by the minions that cast them.
 - Ash imps now properly deal fire/dark/poison damage at random instead of only fire.
 - When reincarnation removes non-passive buffs after death, and reapplies itself after death if it is non-passive, this no longer counts as applying/removing buffs. May not matter for vanilla but may matter for mods.
