@@ -4869,6 +4869,7 @@ def modify_class(cls):
         def trigger(self, target):
             unit = FurnaceHound()
             apply_minion_bonuses(self, unit)
+            unit.buffs[1].radius = self.get_stat("radius", base=4)
             self.summon(unit, target, sort_dist=False)
             yield
 
