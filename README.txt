@@ -195,6 +195,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - When the game checks whether a unit is stunned, it now checks all of the unit's buffs to see if any of them prevent action, not just if any of them is a subtype of the stun debuff.
 - Black Rider Tide of Rot now benefits from duration bonuses.
 - Furnace hounds summoned by Furnace shrine now have their aura radii benefit from radius bonuses.
+- War banners now restore gate timers properly if they're deleted without triggering death events.
+- War banners now increase and decrease gate timers properly if there are more than 7 of them in one realm.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
