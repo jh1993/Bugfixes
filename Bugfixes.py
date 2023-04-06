@@ -5753,6 +5753,8 @@ def modify_class(cls):
                     if other_targets:
                         cur_target = random.choice(other_targets)
                 self.caster.level.deal_damage(cur_target.x, cur_target.y, damage, dtype, self)
+                for i in range(9):
+                    yield
 
     if cls is MegaAnnihilateSpell:
 
