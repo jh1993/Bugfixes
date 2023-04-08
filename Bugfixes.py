@@ -2265,6 +2265,49 @@ def modify_class(cls):
                 target = Point(self.owner.x, self.owner.y)
             return self.owner.level.summon(self.owner, unit, target, radius, team, sort_dist)
 
+        def apply(self, owner):
+            assert(not self.applied)
+            self.owner = owner
+            if self.on_applied(owner) == ABORT_BUFF_APPLY:
+                return ABORT_BUFF_APPLY
+
+            self.applied = True
+
+            if self.owner.level:
+                self.subscribe()
+
+            # Accumulate resists
+            for dtype, resist in self.resists.items():
+                self.owner.resists[dtype] += resist
+
+            # Accumulate spell bonuses
+            for attr, amt in self.global_bonuses.items():
+                owner.global_bonuses[attr] += amt
+
+            for spell_class, bonuses in self.spell_bonuses.items():
+                for attr, amt in bonuses.items():
+                    owner.spell_bonuses[spell_class][attr] += amt
+
+            for tag, bonuses in self.tag_bonuses.items():
+                for attr, amt in bonuses.items():
+                    owner.tag_bonuses[tag][attr] += amt
+
+            # Modify spells
+            for spell in self.owner.spells:
+                self.modify_spell(spell)
+
+            # Add all new spells from this buff
+            if self.spells:
+                for spell in self.spells:
+                    if spell.name not in [s.name for s in self.owner.spells]:
+                        spell.added_by_buff = True
+                        self.owner.add_spell(spell)
+
+            # Modify sprite on transforms
+            if self.transform_asset_name:
+                assert(self.stack_type == STACK_TYPE_TRANSFORM)
+                self.owner.transform_asset_name = self.transform_asset_name
+
     if cls is HallowFlesh:
 
         def cast(self, x, y):
