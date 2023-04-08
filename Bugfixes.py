@@ -2136,6 +2136,118 @@ def modify_class(cls):
 
     if cls is Unit:
 
+        def get_ai_action(self):
+            assert(not self.is_player_controlled)
+            assert(self.is_alive())
+            assert(not self.killed)
+
+            # For now always channel if you can
+            if self.has_buff(ChannelBuff):
+                return PassAction()
+
+            for spell in self.spells:
+                if not spell.can_pay_costs():
+                    continue
+
+                spell_target = spell.get_ai_target()
+                if spell_target and not spell.can_cast(spell_target.x, spell_target.y):
+                    # Should not happen ever but sadly it does alot
+                    target_unit = self.level.get_unit_at(spell_target.x, spell_target.y)
+                    if target_unit:
+                        target_str = target_unit.name
+                        if target_unit == self:
+                            target_str = 'self'
+                    else:
+                        target_str = "empty tile"
+                    print("%s wants to cast %s on invalid target (%s)" % (self.name, spell.name, target_str))
+                    continue
+                if spell_target:
+                    return CastAction(spell, spell_target.x, spell_target.y)
+
+            # Stationary monsters pass if they cant cast
+            if self.stationary:
+                return PassAction()
+
+            # Currently select targets via controller
+            if not self.is_coward:
+                possible_movement_targets = [u for u in self.level.units if self.level.are_hostile(self, u) and self.can_harm(u)]
+
+                # Non flying monsters will not move towards flyers over chasms
+                if not self.flying:
+                    possible_movement_targets = [u for u in possible_movement_targets if self.level.tiles[u.x][u.y].can_walk]
+
+                # The player is always prioritized if possible
+                if any(u.is_player_controlled for u in possible_movement_targets):
+                    possible_movement_targets = [u for u in possible_movement_targets if u.is_player_controlled]
+
+            # Cowards move away from closest enemy, swapping if neccecary
+            else:
+                enemies = [u for u in self.level.units if self.level.are_hostile(self, u)]
+                if enemies:
+                    enemies.sort(key = lambda u: distance(self, u))
+                    closest = enemies[0]
+
+                    def can_flee_to(p):
+                        unit = self.level.get_unit_at(p.x, p.y)
+                        if unit and are_hostile(self, unit):
+                            return False
+                        # Don't let cowards continually swap with each other- looks like no one is moving at all when that happens
+                        if unit and unit.is_coward:
+                            return False
+                        # Don't flee through a player, its confusing
+                        if unit and unit.is_player_controlled:
+                            return False
+                        # Don't swap with stationary units
+                        if unit and unit.stationary:
+                            return False
+                        # Must be able to walk on the tile
+                        if not self.level.can_stand(p.x, p.y, self, check_unit=False):
+                            return False
+                        # If there is a unit, *it* must be able to walk on the tile I am currently on
+                        if unit and not self.level.can_stand(p.x, p.y, unit, check_unit=False):
+                            return False
+                        return True
+
+                    best_flee_points = [p for p in self.level.get_adjacent_points(self, filter_walkable=False) if can_flee_to(p)]
+                    if best_flee_points:
+                        best_flee_points.sort(key = lambda p: distance(p, closest), reverse=True)
+
+                        best_dist = distance(best_flee_points[0], closest)
+                        best_flee_points = [p for p in best_flee_points if distance(p, closest) >= best_dist]
+
+                        p = random.choice(best_flee_points)
+                        return MoveAction(p.x, p.y)
+                    else:
+                        possible_movement_targets = None
+                else:
+                    possible_movement_targets = None
+
+            if not possible_movement_targets:
+
+                # Move randomly if there are no enemies in the level
+                possible_movement_targets = [p for p in self.level.get_adjacent_points(Point(self.x, self.y), check_unit=True, filter_walkable=False) if self.level.can_stand(p.x, p.y, self)]
+                if not possible_movement_targets:
+                    return PassAction()
+                else:
+                    p = random.choice(possible_movement_targets)
+                    return MoveAction(p.x, p.y)
+
+            target = min(possible_movement_targets, key = lambda t: distance(Point(self.x, self.y), Point(t.x, t.y)))
+
+            if distance(Point(target.x, target.y), Point(self.x, self.y)) >= 2:
+                path = self.level.find_path(Point(self.x, self.y), Point(target.x, target.y), self)
+
+                if path:
+                    if libtcod.path_size(path) > 0:
+                        x, y = libtcod.path_get(path, 0)
+                        if self.level.can_move(self, x, y):
+                            return MoveAction(x, y)
+
+                    libtcod.path_delete(path)
+
+            # If you cant do anything then pass
+            return PassAction()
+
         def is_stunned(self):
             # Skip action if stunned, but advance buffs first.
             for b in self.buffs:
