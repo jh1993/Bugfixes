@@ -221,6 +221,9 @@ class RotBuff(Buff):
         self.hp = 0
 
     def on_applied(self, owner):
+        self.owner.level.queue_spell(self.modify_unit())
+
+    def modify_unit(self):
         self.hp = math.floor(self.owner.max_hp*self.spell.get_stat('max_health_loss')/100)
         drain_max_hp(self.owner, self.hp)
         if Tags.Living in self.owner.tags:
@@ -230,13 +233,18 @@ class RotBuff(Buff):
             self.originally_undead = True
         else:
             self.owner.tags.append(Tags.Undead)
+        yield
     
     def on_unapplied(self):
+        self.owner.level.queue_spell(self.unmodify_unit())
+
+    def unmodify_unit(self):
         self.owner.max_hp += self.hp
         if not self.originally_undead and Tags.Undead in self.owner.tags:
             self.owner.tags.remove(Tags.Undead)
         if self.originally_living and Tags.Living not in self.owner.tags:
             self.owner.tags.append(Tags.Living)
+        yield
 
 def fix_unit(unit):
     if unit.name in bugged_units_fixer.keys():
@@ -3412,6 +3420,25 @@ def modify_class(cls):
                 self.resists[tag] = self.spell.get_stat('resist')
             if self.spell.get_stat('resist_arcane'):
                 self.resists[Tags.Arcane] = self.spell.get_stat('resist')
+
+        def on_applied(self, owner):
+            self.owner.level.queue_spell(modify_unit(self))
+        
+        def modify_unit(self):
+            if Tags.Metallic not in self.owner.tags:
+                self.nonmetal = True
+                self.owner.tags.append(Tags.Metallic)
+            else:
+                self.nonmetal = False
+            yield
+
+        def on_unapplied(self):
+            self.owner.level.queue_spell(unmodify_unit(self))
+        
+        def unmodify_unit(self):
+            if self.nonmetal:
+                self.owner.tags.remove(Tags.Metallic)
+            yield
 
     if cls is HolyShieldBuff:
 
