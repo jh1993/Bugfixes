@@ -211,12 +211,14 @@ class RotBuff(Buff):
         self.name = "Hollow Flesh"
         self.asset = ['status', 'rot']
         self.buff_type = BUFF_TYPE_CURSE
+        self.stack_type = STACK_REPLACE
         self.resists[Tags.Dark] = 100
         self.resists[Tags.Holy] = -100
         self.resists[Tags.Fire] = -self.spell.get_stat('fire_vulnerability')
         self.resists[Tags.Heal] = 100
         self.originally_living = False
         self.originally_undead = False
+        self.hp = 0
 
     def on_applied(self, owner):
         self.hp = math.floor(self.owner.max_hp*self.spell.get_stat('max_health_loss')/100)
@@ -230,15 +232,11 @@ class RotBuff(Buff):
             self.owner.tags.append(Tags.Undead)
     
     def on_unapplied(self):
-        self.owner.level.queue_spell(self.unmodify_unit())
-
-    def unmodify_unit(self):
         self.owner.max_hp += self.hp
         if not self.originally_undead and Tags.Undead in self.owner.tags:
             self.owner.tags.remove(Tags.Undead)
         if self.originally_living and Tags.Living not in self.owner.tags:
             self.owner.tags.append(Tags.Living)
-        yield
 
 def fix_unit(unit):
     if unit.name in bugged_units_fixer.keys():
