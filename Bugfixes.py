@@ -7651,7 +7651,7 @@ def modify_class(cls):
             self.duration = 4
 
         def get_description(self):
-            return "All enemies in line of sight lose 1 max HP and are poisoned for %i turns." % self.get_stat("description")
+            return "All enemies in line of sight lose 1 max HP and are poisoned for %i turns." % self.get_stat("duration")
 
         def cast(self, x, y):
             for u in self.caster.level.get_units_in_los(self.caster):
