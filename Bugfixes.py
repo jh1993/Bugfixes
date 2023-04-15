@@ -6306,18 +6306,20 @@ def modify_class(cls):
                 self.summon(eye, p)
 
                 for spell in self.caster.spells:
-                    if Tags.Eye in spell.tags and spell.range == 0:
+                    if Tags.Eye in spell.tags:
                         # Temporarily change caster of spell
-                        spell = type(spell)()
-                        spell.caster = eye
-                        spell.owner = eye
-                        spell.statholder = self.caster
-                        self.caster.level.act_cast(eye, spell, eye.x, eye.y, pay_costs=False)
+                        spell_copy = type(spell)()
+                        spell_copy.caster = eye
+                        spell_copy.owner = eye
+                        spell_copy.statholder = self.caster
+                        if not spell_copy.can_cast(p.x, p.y):
+                            continue
+                        self.caster.level.act_cast(eye, spell_copy, eye.x, eye.y, pay_costs=False)
 
         def get_description(self):
             return ("Summon a floating eye.\n"
                     "Floating eyes have [{minion_health}_HP:minion_health], [{shields}_SH:shields], float in place, and passively blink.\n"
-                    "Floating eyes have no attacks of their own, but will cast any self-targeted [eye] spells you know upon being summoned.\n"
+                    "Floating eyes have no attacks of their own, but will cast any self-targetable [eye] spells you know upon being summoned, in the order they are listed in your spell bar.\n"
                     "Floating eyes vanish after [{minion_duration}_turns:minion_duration].").format(**self.fmt_dict())
 
     if cls is SlimeBuff:

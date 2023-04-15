@@ -126,7 +126,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Ghostfire description now correctly states that fire ghosts have 50% dark resistance instead of 100%. The fire ghosts are now identical to enemy fire ghosts.
 - Units that mature into other units, transform into other units on death, and have a chance to spawn other units per turn now attribute the new units to the source that summoned the original unit, and apply that source's minion bonuses to the new units. Units that split into smaller versions of themselves now also attribute their children to the same source as themselves, but do not apply minion bonuses, as the HP and damage of the children depend on the parent's HP; similarly for slimes.
 - Units that have a chance each turn to automatically summon other units can now summon them within 3 tiles instead of only adjacent, like gates.
-- Floating Eye now only casts self-targeted eye spells. Doesn't affect the base game but may affect mods.
+- Floating Eye now only casts self-targetable eye spells. Doesn't affect the base game but may affect mods.
+- Floating Eye description changed to specify that it will cast spells in the order that they are listed in your spell bar.
 - Friendly giant worm balls, gnome variants, and the Mischief Maker (via Dominate or something modded) now summon friendly units with the same source as their casters.
 - All spells should work properly with Oculus now, even beams. Note that this won't allow bursts to pass through walls if they can't already do so innately.
 - Icicle, Poison Sting, Magic Missile, goblin demolitionist bomb toss, ice witch freeze, red cyclops batting units, giant soul jar pickle soul, Ice Wizard icicle, and Goblin Wizard ignite poison now show their graphical effects properly when granted blindcasting.
