@@ -2440,7 +2440,11 @@ def modify_class(cls):
 
         def effect_unit(self, unit):
             if Tags.Demon not in unit.tags and Tags.Undead not in unit.tags:
-                unit.apply_buff(BlindBuff(), 1, prepend=unit is self.owner)
+                if unit is self.owner:
+                    existing = unit.get_buff(BlindBuff)
+                    if existing and existing.turns_left == 1:
+                        unit.remove_buff(existing)
+                unit.apply_buff(BlindBuff(), 1)
 
         def on_advance(self):
             for unit in list(self.owner.level.units):
@@ -3411,6 +3415,20 @@ def modify_class(cls):
             self.name = "Petrification Aura"
             self.description = "%s nearby enemies each turn" % ("Glassify" if self.spell.get_stat("glassify") else "Petrify")
             self.color = Tags.Glass.color if self.spell.get_stat("glassify") else Color(180, 180, 180)
+
+        def on_advance(self):
+            BuffClass = GlassPetrifyBuff if self.spell.get_stat('glassify') else PetrifyBuff
+            units = [u for u in self.owner.level.get_units_in_ball(self.owner, self.spell.get_stat('radius'))]
+            random.shuffle(units)
+            stoned = 0
+            for u in units:
+                if not are_hostile(self.owner, u):
+                    continue
+                u.apply_buff(BuffClass(), self.spell.get_stat('petrify_duration'))
+                stoned += 1
+
+                if stoned >= self.spell.get_stat('num_targets'):
+                    break
 
     if cls is IronSkinBuff:
 
