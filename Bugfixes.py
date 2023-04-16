@@ -3402,6 +3402,17 @@ def modify_class(cls):
             self.owner.level.show_path_effect(unit, candidate, chosen_tag, minor=True)
             yield
 
+        def raise_golem(self, unit):
+            if unit and unit.cur_hp <= 0 and not self.owner.level.get_unit_at(unit.x, unit.y):
+                g = Golem()
+                g.asset_name = 'golem_junk'
+                g.name = "Junk Golem"
+                g.spells = [SimpleMeleeAttack(self.spell.get_stat('minion_damage'))]
+                g.tags.append(Tags.Undead)
+                g.max_hp = unit.max_hp
+                self.spell.summon(g, target=unit)
+            yield
+
     if cls is FlameGateBuff:
 
         def on_applied(self, owner):
