@@ -204,6 +204,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The max HP changes and tag changes of Hollow Flesh and Ironize now persist until all current on-death effects have resolved before being removed.
 - Petrification Aura no longer ignores already petrified enemies when reapplying the debuff.
 - Restless Dead junk golems now count as minions summoned by the spell.
+- Melee retaliation now works if the unit is damaged by a melee or leap attack, not only if the unit is targeted by such an attack.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
