@@ -205,6 +205,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Petrification Aura no longer ignores already petrified enemies when reapplying the debuff.
 - Restless Dead junk golems now count as minions summoned by the spell.
 - Melee retaliation now works if the unit is damaged by a melee or leap attack, not only if the unit is targeted by such an attack.
+- Idol of Clarity will now only remove stun and berserk that are classified as debuffs, and will not stop looking if it encounters an instance of stun or berserk that isn't a debuff.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

@@ -2134,8 +2134,11 @@ def modify_class(cls):
             for u in units:
                 if u.team != self.owner.team:
                     continue
-                buf = u.get_buff(Stun) or u.get_buff(BerserkBuff)
-                if buf:
+                for buf in u.buffs:
+                    if not isinstance(buf, Stun) and not isinstance(buf, BerserkBuff):
+                        continue
+                    if buf.buff_type != BUFF_TYPE_CURSE:
+                        continue
                     u.remove_buff(buf)
                     self.owner.level.show_path_effect(self.owner, u, Tags.Holy, minor=True)
                     return
