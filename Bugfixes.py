@@ -2855,14 +2855,31 @@ def modify_class(cls):
 
             obj.removed = True
 
+        def reset_chasm_sprite(self, x, y):
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    new_x = x + dx
+                    new_y = y + dy
+                    if new_x < 0 or new_x >= LEVEL_SIZE or new_y < 0 or new_y >= LEVEL_SIZE:
+                        continue
+                    tile = self.tiles[new_x][new_y]
+                    if not tile.is_chasm:
+                        continue
+                    tile.sprites = None
+
         def make_wall(self, x, y, calc_glyph=True):
 
             tile = self.tiles[x][y]
+            if not tile.can_see:
+                return
+            old_chasm = tile.is_chasm
             tile.sprites = None
             tile.can_walk = False
             tile.can_see = False
             tile.can_fly = False
             tile.is_chasm = False
+            if old_chasm:
+                reset_chasm_sprite(self, x, y)
 
             if self.tcod_map:
                 libtcod.map_set_properties(self.tcod_map, tile.x, tile.y, tile.can_see, tile.can_walk)
@@ -2870,22 +2887,30 @@ def modify_class(cls):
         def make_floor(self, x, y, calc_glyph=True):
 
             tile = self.tiles[x][y]
+            if tile.can_walk:
+                return
+            old_chasm = tile.is_chasm
             tile.sprites = None
             tile.can_walk = True
             tile.can_see = True
             tile.can_fly = True
             tile.is_chasm = False
+            if old_chasm:
+                reset_chasm_sprite(self, x, y)
 
             if self.tcod_map:
                 libtcod.map_set_properties(self.tcod_map, tile.x, tile.y, tile.can_see, tile.can_walk)
 
         def make_chasm(self, x, y, calc_glyph=True):
             tile = self.tiles[x][y]
+            if tile.is_chasm:
+                return
             tile.sprites = None
             tile.can_walk = False
             tile.can_see = True
             tile.can_fly = True
             tile.is_chasm = True
+            reset_chasm_sprite(self, x, y)
 
             if self.tcod_map:
                 libtcod.map_set_properties(self.tcod_map, tile.x, tile.y, tile.can_see, tile.can_walk)
