@@ -208,6 +208,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Idol of Clarity will now only remove stun and berserk that are classified as debuffs, and will not stop looking if it encounters an instance of stun or berserk that isn't a debuff.
 - Spider Spawning is now queued, so the spider will be summoned onto the same tile as the dead unit, instead of shunted to a different tile. This means spiders will no longer get hit again by Toxin Burst.
 - Chasm edges no longer look discontinuous when converting floors or walls to chasms, or chasms to floors or walls.
+- Fire cluster bombers now correctly display that they spawn fire bombers on death.
+- Bomber suicide explosion descriptions now dynamically update their listed radii.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

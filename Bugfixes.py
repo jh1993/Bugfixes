@@ -4374,15 +4374,6 @@ def modify_class(cls):
             self.description = "When damaged, creates 2 blizzards up to %d tiles away" % self.radius
             self.color = Tags.Ice.color
 
-    if cls is FireBomberBuff:
-
-        def on_init(self):
-            self.name = "Suicide Explosion"
-            self.radius = 2
-            self.damage = 12
-            self.clusters = 0
-            self.color = Tags.Fire.color
-
     if cls is SpiderBuff:
 
         def on_init(self):
@@ -5193,6 +5184,48 @@ def modify_class(cls):
         def get_description(self):
             return ("Whenever this spell kills a unit, if that unit had at least one debuff, summon a faewitch for [{minion_duration}_turns:minion_duration].").format(**self.fmt_dict())
 
+    if cls is FireBomberBuff:
+
+        def on_init(self):
+            self.name = "Suicide Explosion"
+            self.radius = 2
+            self.damage = 12
+            self.clusters = 0
+            self.color = Tags.Fire.color
+
+        def get_tooltip(self):
+            if self.clusters:
+                return "Spawns %d fire bombers on death" % self.clusters
+
+        def explode(self, level, x, y):
+
+            spell = None
+            for s in self.owner.spells:
+                if isinstance(s, FireBomberSuicide):
+                    spell = s
+                    break
+            if spell:
+                self.damage = spell.get_stat("damage")
+                self.radius = spell.get_stat("range")
+
+            # This is a weird aoe b which matches cast range
+            for point in self.owner.level.get_points_in_ball(x, y, self.radius):
+                if not self.owner.level.can_see(x, y, point.x, point.y):
+                    continue
+                self.owner.level.deal_damage(point.x, point.y, self.damage, Tags.Fire, self)
+
+
+            for i in range(self.clusters):
+                p = self.owner.level.get_summon_point(self.owner.x, self.owner.y, sort_dist=False, radius_limit=2)
+                if p:
+                    for q in self.owner.level.get_points_in_line(self.owner, p)[1:-1]:
+                        self.owner.level.deal_damage(q.x, q.y, 0, Tags.Fire, self)
+                    bomb = FireBomber()
+                    bomb.team = self.owner.team
+                    self.owner.level.add_obj(bomb, p.x, p.y)
+
+            yield
+
     if cls is VoidBomberBuff:
 
         def on_init(self):
@@ -5203,6 +5236,16 @@ def modify_class(cls):
             self.color = Tags.Arcane.color
 
         def explode(self, level, x, y):
+
+            spell = None
+            for s in self.owner.spells:
+                if isinstance(s, VoidBomberSuicide):
+                    spell = s
+                    break
+            if spell:
+                self.damage = spell.get_stat("damage")
+                self.radius = spell.get_stat("range")
+            
             for p in level.get_points_in_rect(x - self.radius, y - self.radius, x + self.radius, y + self.radius):
                 level.deal_damage(p.x, p.y, self.damage, Tags.Arcane, self)
 
@@ -5232,14 +5275,9 @@ def modify_class(cls):
                 return self.get_stat("radius", base=buff.radius)
             return Spell.get_stat(self, attr, base)
 
-        def cast(self, x, y):
-            buff = self.caster.get_buff(VoidBomberBuff)
-            if not buff:
-                return
-            buff.damage = self.get_stat("damage")
-            buff.radius = self.get_stat("radius", base=buff.radius)
-            self.caster.kill()
-            yield
+        def get_description(self):
+            width = 2*self.get_stat("range") + 1
+            return "Suicide attack\n%ix%i square area\nMelts walls\nAutocast on death" % (width, width)
 
     if cls is FireBomberSuicide:
 
@@ -5251,14 +5289,8 @@ def modify_class(cls):
                 return self.get_stat("radius", base=buff.radius)
             return Spell.get_stat(self, attr, base)
 
-        def cast(self, x, y):
-            buff = self.caster.get_buff(FireBomberBuff)
-            if not buff:
-                return
-            buff.damage = self.get_stat("damage")
-            buff.radius = self.get_stat("radius", base=buff.radius)
-            self.caster.kill()
-            yield
+        def get_description(self):
+            return "Suicide attack\n%i tile radius\nAutocast on death" % self.get_stat("range")
 
     if cls is BomberShrineBuff:
 
