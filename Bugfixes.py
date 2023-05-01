@@ -300,6 +300,10 @@ def fix_mischief_maker(unit):
             caster.level.summon(caster, thorn, target)
     unit.spells[0].onhit = ThornTrouble
 
+def fix_ghostly_spikeball(unit):
+    unit.tags.append(Tags.Undead)
+    unit.resists[Tags.Ice] = 100
+
 bugged_units_fixer = {
     "Swamp Queen": lambda unit: setattr(unit.spells[2], "onhit", lambda caster, target: target.apply_buff(Poison(), 4)),
     "Slimesoul Idol": lambda unit: set_asset(unit, "slimesoul_idol"),
@@ -326,7 +330,8 @@ bugged_units_fixer = {
     "Iron Gnome": lambda unit: fix_onhit_summon(unit, IronThorn, "Iron Thorn Bolt"),
     "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
     "The Mischief Maker": fix_mischief_maker,
-    "Faery Arcanist": lambda unit: setattr(unit, "flying", True)
+    "Faery Arcanist": lambda unit: setattr(unit, "flying", True),
+    "Ghostly Spike Ball": fix_ghostly_spikeball
 }
 
 class OakenBuff(Buff):
