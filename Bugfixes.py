@@ -2543,6 +2543,89 @@ def modify_class(cls):
 
     if cls is Level:
 
+        def get_points_in_line(self, start, end, two_pass=True, find_clear=False):
+
+            # Always prioritize non-wall tiles if possible.
+            if not find_clear:
+                clear_line = self.get_points_in_line(start, end, two_pass, find_clear=True)
+                if clear_line:
+                    return clear_line
+
+            steep = abs(end.y - start.y) > abs(end.x - start.x)
+
+            # Orient the line so that it is going left to right with slope between 1 and -1
+            if steep:
+                start = Point(start.y, start.x)
+                end = Point(end.y, end.x)
+
+            reverse = False
+            if start.x > end.x:
+                reverse = True
+
+                swap_temp = end
+                end = start
+                start = swap_temp
+
+            dx = end.x - start.x
+            dy = abs(end.y - start.y)
+            
+            if not find_clear:
+                starting_err_vals = [dx / 2.0]
+            else:
+                starting_err_vals = list(range(dx+1))
+                starting_err_vals = sorted(starting_err_vals, key=lambda v: abs(v - (dx / 2.0)))
+
+            for starting_err_val in starting_err_vals:
+                err = starting_err_val
+
+                ystep = 1 if start.y < end.y else -1
+                y = start.y
+
+                result = []
+                if isinstance(start.x, float) or isinstance(end.x, float):
+                    assert(False)
+
+                clear = True
+                for x in range(start.x, end.x + 1):
+                    if not steep:
+                        next_point = Point(x, y)
+                    else:
+                        next_point = Point(y, x)
+
+                    result.append(next_point)
+
+
+                    err = err - dy
+                    if (not reverse and err < 0) or (reverse and err <= 0):
+                        y += ystep
+                        err += dx
+
+                if find_clear and not clear:
+                    continue
+
+                if two_pass:
+                    for i in range(2):
+                        self.adjust_beam(result)
+
+                if find_clear:
+                    valid = True
+                    for p in result:
+                        if not self.is_point_in_bounds(p):
+                            valid = False
+                        elif not self.tiles[p.x][p.y].can_see:
+                            valid = False
+                    if not valid:
+                        continue
+
+                if reverse:
+                    result.reverse()
+
+                return result
+
+            # If we are looking for a clear path but none are clear return the default
+            assert(find_clear)
+            return []
+
         def find_path(self, start, target, pather, pythonize=False, cosmetic=False, melt_walls=False):
             
             # Early out if the pather is surrounded by units and walls
