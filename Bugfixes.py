@@ -15,6 +15,25 @@ import CommonContent, Spells
 import sys
 curr_module = sys.modules[__name__]
 
+def drain_max_hp_kill(unit, hp, source):
+    if unit.max_hp > hp:
+        drain_max_hp(unit, hp)
+    else:
+        old_hp = unit.max_hp
+        unit.max_hp = 1
+        unit.kill(damage_event=EventOnDamaged(unit, old_hp, Tags.Dark, source))
+
+def increase_cooldown(caster, target, melee):
+    spells = [s for s in target.spells if s.cool_down and target.cool_downs.get(s, 0) < s.cool_down]
+    if target.gets_clarity:
+        spells = []
+    if not spells:
+        target.deal_damage(melee.get_stat("damage"), melee.damage_type, melee)
+        return
+    spell = random.choice(spells)
+    cooldown = target.cool_downs.get(spell, 0)
+    target.cool_downs[spell] = cooldown + 1
+
 def push(target, source, squares):
     dir_x = target.x - source.x
     dir_y = target.y - source.y
@@ -305,12 +324,14 @@ def fix_ghostly_spikeball(unit):
     unit.resists[Tags.Ice] = 100
 
 def fix_greater_vampire(unit):
+    if unit.team == TEAM_PLAYER:
+        return
     melee = unit.spells[0]
     def drain(caster, target):
-        amount = melee.get_stat("damage")
-        caster.max_hp += amount
-        caster.deal_damage(-amount, Tags.Heal, melee)
-        drain_max_hp(target, amount)
+        caster.max_hp += 7
+        caster.deal_damage(-7, Tags.Heal, melee)
+        drain_max_hp(target, 7)
+    melee.description = "Drains 7 max HP."
     melee.onhit = drain
 
 bugged_units_fixer = {
