@@ -304,6 +304,15 @@ def fix_ghostly_spikeball(unit):
     unit.tags.append(Tags.Undead)
     unit.resists[Tags.Ice] = 100
 
+def fix_greater_vampire(unit):
+    melee = unit.spells[0]
+    def drain(caster, target):
+        amount = melee.get_stat("damage")
+        caster.max_hp += amount
+        caster.deal_damage(-amount, Tags.Heal, melee)
+        drain_max_hp(target, amount)
+    melee.onhit = drain
+
 bugged_units_fixer = {
     "Swamp Queen": lambda unit: setattr(unit.spells[2], "onhit", lambda caster, target: target.apply_buff(Poison(), 4)),
     "Slimesoul Idol": lambda unit: set_asset(unit, "slimesoul_idol"),
@@ -331,7 +340,8 @@ bugged_units_fixer = {
     "Gnome Druid": lambda unit: fix_onhit_summon(unit, FaeThorn, "Thorn Bolt"),
     "The Mischief Maker": fix_mischief_maker,
     "Faery Arcanist": lambda unit: setattr(unit, "flying", True),
-    "Ghostly Spike Ball": fix_ghostly_spikeball
+    "Ghostly Spike Ball": fix_ghostly_spikeball,
+    "Greater Vampire": fix_greater_vampire
 }
 
 class OakenBuff(Buff):
