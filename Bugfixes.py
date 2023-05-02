@@ -279,7 +279,7 @@ fix_copper_unit = lambda unit: unit.tags.append(Tags.Lightning)
 fix_furnace_unit = lambda unit: unit.tags.append(Tags.Fire)
 
 def fix_vampire_bat(unit):
-    if unit.is_coward:
+    if unit.is_coward and unit.team != TEAM_PLAYER:
         unit.name = "Vampire Bat"
         unit.tags = [Tags.Dark, Tags.Undead]
         unit.spells = []
