@@ -6588,7 +6588,7 @@ def modify_class(cls):
                     dtypes = self.damage_type
             
             def is_target(v):
-                if not are_hostile(self.caster, v):
+                if bool(self.target_allies) == bool(are_hostile(v, self.caster)):
                     return False
                 # if no damage type is specified, take any hostile target
                 if not dtypes:
@@ -6629,6 +6629,36 @@ def modify_class(cls):
                     continue
                 return p
             return None
+
+        def get_ai_target(self):
+            if self.self_target:
+                return self.caster if self.can_cast(self.caster.x, self.caster.y) else None
+
+            if hasattr(self, "radius") and self.radius > 0:
+                return self.get_corner_target(self.get_stat("radius"))
+
+            def is_good_target(u):
+                if not u:
+                    return False
+                if bool(self.target_allies) == bool(self.caster.level.are_hostile(u, self.caster)):
+                    return False
+                if hasattr(self, 'damage_type'):
+                    if isinstance(self.damage_type, list):
+                        if all(u.resists[dtype] >= 100 for dtype in self.damage_type):
+                            return False
+                    else:
+                        if u.resists[self.damage_type] >= 100:
+                            return False
+                if not self.can_cast(u.x, u.y):
+                    return False
+                return True
+
+            targets = [u for u in self.caster.level.units if is_good_target(u)]
+            if not targets:
+                return None
+            else:
+                target = random.choice(targets)
+                return Point(target.x, target.y)
 
     if cls is Icicle:
 
