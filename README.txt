@@ -128,7 +128,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Units that have a chance each turn to automatically summon other units can now summon them within 3 tiles instead of only adjacent, like gates.
 - Floating Eye now only casts self-targetable eye spells. Doesn't affect the base game but may affect mods.
 - Floating Eye description changed to specify that it will cast spells in the order that they are listed in your spell bar.
-- Friendly giant worm balls, gnome variants, and the Mischief Maker (via Dominate or something modded) now summon friendly units with the same source as their casters.
+- Friendly giant worm balls, gnome variants, redcaps, slime brewers, tombstones, cluster bombers, fire witches, Vampire Necromancer, Yggdrasil, and the Mischief Maker (via Dominate or something modded) now summon friendly units with the same source and minion bonuses as their casters.
 - All spells should work properly with Oculus now, even beams. Note that this won't allow bursts to pass through walls if they can't already do so innately.
 - Icicle, Poison Sting, Magic Missile, goblin demolitionist bomb toss, ice witch freeze, red cyclops batting units, giant soul jar pickle soul, Ice Wizard icicle, and Goblin Wizard ignite poison now show their graphical effects properly when granted blindcasting.
 - Pyrostatic Pulse, Call Archon lightning beam, butterfly demon lightning beam, and storm fiend lightning beam now deal damage correctly when granted blindcasting.
@@ -213,6 +213,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Ghostly spikeballs are now undead.
 - Greater vampires attack description changed to state that it always drains 7 max HP. Its drain now counts as healing.
 - The AI will now correctly take advantage of AoE when casting player spells like Fireball.
+- Units that split or summon other units on death now queue their summons, so that they happen after the original tiles become empty.
+- The spell queue now runs in strictly sequential order instead of allowing effects with the "same code" to jump ahead in the queue, resulting in a more predictable order of execution. If this causes slowdowns, you might need to use Xturbo mode.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

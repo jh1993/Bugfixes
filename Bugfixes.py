@@ -334,6 +334,22 @@ def fix_greater_vampire(unit):
     melee.description = "Drains 7 max HP."
     melee.onhit = drain
 
+def fix_fire_witch(unit):
+    def burn_ghost(caster, target):
+        if target.cur_hp > 0:
+            return
+        if Tags.Living not in target.tags and Tags.Undead not in target.tags:
+            return
+        
+        p = target.level.get_summon_point(target.x, target.y)
+        if p:
+            ghost = GhostFire()
+            ghost.turns_to_death = 10
+            ghost.source = caster.source
+            ghost.team = caster.team
+            apply_minion_bonuses(caster.source, ghost)
+            target.level.add_obj(ghost, p.x, p.y)
+
 bugged_units_fixer = {
     "Swamp Queen": lambda unit: setattr(unit.spells[2], "onhit", lambda caster, target: target.apply_buff(Poison(), 4)),
     "Slimesoul Idol": lambda unit: set_asset(unit, "slimesoul_idol"),
@@ -362,7 +378,9 @@ bugged_units_fixer = {
     "The Mischief Maker": fix_mischief_maker,
     "Faery Arcanist": lambda unit: setattr(unit, "flying", True),
     "Ghostly Spike Ball": fix_ghostly_spikeball,
-    "Greater Vampire": fix_greater_vampire
+    "Greater Vampire": fix_greater_vampire,
+    "Redcap": lambda unit: fix_onhit_summon(unit, RedMushboom, "Fire Seed"),
+    "Slime Brewer": lambda unit: fix_onhit_summon(unit, GreenSlime, "Slime Shot"),
 }
 
 class OakenBuff(Buff):
@@ -2573,6 +2591,15 @@ def modify_class(cls):
             self.caster.apply_buff(buff, self.get_stat('duration'))
 
     if cls is Level:
+
+        def advance_spells(self):
+            if not self.active_spells:
+                return
+
+            for s in list(self.active_spells):
+                stopped = next(s, "Stopped")
+                if stopped == "Stopped":
+                    self.active_spells.remove(s)
 
         def get_points_in_line(self, start, end, two_pass=True, find_clear=False):
 
@@ -5335,13 +5362,11 @@ def modify_class(cls):
 
 
             for i in range(self.clusters):
-                p = self.owner.level.get_summon_point(self.owner.x, self.owner.y, sort_dist=False, radius_limit=2)
-                if p:
-                    for q in self.owner.level.get_points_in_line(self.owner, p)[1:-1]:
-                        self.owner.level.deal_damage(q.x, q.y, 0, Tags.Fire, self)
-                    bomb = FireBomber()
-                    bomb.team = self.owner.team
-                    self.owner.level.add_obj(bomb, p.x, p.y)
+                bomb = FireBomber()
+                bomb.team = self.owner.team
+                bomb.source = self.owner.source
+                apply_minion_bonuses(self.owner.source, bomb)
+                self.summon(bomb, target=self.owner, radius=2, sort_dist=False)
 
             yield
 
@@ -5374,13 +5399,11 @@ def modify_class(cls):
                     level.make_floor(p.x, p.y)
 
             for i in range(self.clusters):
-                p = self.owner.level.get_summon_point(self.owner.x, self.owner.y, sort_dist=False, radius_limit=2)
-                if p:
-                    for q in self.owner.level.get_points_in_line(self.owner, p)[1:-1]:
-                        self.owner.level.deal_damage(q.x, q.y, 0, Tags.Arcane, self)
-                    bomb = VoidBomber()
-                    bomb.team = self.owner.team
-                    self.owner.level.add_obj(bomb, p.x, p.y)
+                bomb = VoidBomber()
+                bomb.team = self.owner.team
+                bomb.source = self.owner.source
+                apply_minion_bonuses(self.owner.source, bomb)
+                self.summon(bomb, target=self.owner, radius=2, sort_dist=False)
 
             yield
 
@@ -6432,6 +6455,9 @@ def modify_class(cls):
     if cls is SplittingBuff:
 
         def on_death(self, evt):
+            self.owner.level.queue_spell(summon_children(self))
+        
+        def summon_children(self):
             for _ in range(self.children):
                 unit = self.spawner()
                 if unit.max_hp == 0:
@@ -6440,6 +6466,7 @@ def modify_class(cls):
                 if self.owner.team == TEAM_PLAYER:
                     unit.source = self.owner.source
                 self.summon(unit)
+            yield
 
     if cls is GeneratorBuff:
 
@@ -7999,9 +8026,70 @@ def modify_class(cls):
             self.summon(spider, target)
             yield
 
+    if cls is TombstoneSummon:
+
+        def cast_instant(self, x, y):
+
+            p = self.caster.level.get_summon_point(x, y, sort_dist = False, flying=True)
+
+            if p:
+                self.caster.level.show_path_effect(self.caster, p, Tags.Dark, minor=True)
+                ghost = Ghost()
+                ghost.team = self.caster.team
+                ghost.source = self.owner.source
+                apply_minion_bonuses(self.owner.source, ghost)
+                self.caster.level.add_obj(ghost, p.x, p.y)
+
+    if cls is Haunted:
+
+        def on_advance(self):
+            for i in range(2):
+                ghost = Ghost()
+                ghost.team = self.caster.team
+                ghost.turns_to_death = 4
+                ghost.source = self.caster.source
+                apply_minion_bonuses(self.caster.source, ghost)
+                p = self.owner.level.get_summon_point(self.owner.x, self.owner.y, sort_dist=False, radius_limit=7)
+                if p:
+                    self.owner.level.add_obj(ghost, p.x, p.y)
+
+    if cls is TreeThornSummon:
+
+        def on_init(self):
+            self.name = "Grow Thorns"
+            self.num_summons = 3
+            self.cool_down = 3
+            self.range = 100
+            self.requires_los = False
+
+        def cast_instant(self, x, y):
+            for i in range(self.get_stat("num_summons")):
+                p = self.caster.level.get_summon_point(x, y, sort_dist = False, flying=True)
+                if p:
+                    unit = FaeThorn()
+                    unit.source = self.caster.source
+                    unit.team = self.caster.team
+                    apply_minion_bonuses(self.caster.source, unit)
+                    self.caster.level.add_obj(unit, p.x, p.y)
+
+    if cls is SpawnOnDeath:
+
+        def on_death(self, evt):
+            self.owner.level.queue_spell(summon_units(self))
+        
+        def summon_units(self):
+            for i in range(self.num_spawns):
+                unit = self.spawner()
+                # Inherit source- this propogates minion bonuses from shrines and skills
+                if self.owner.source and self.apply_bonuses:
+                    unit.source = self.owner.source
+                    apply_minion_bonuses(self.owner.source, unit)
+                self.summon(unit)
+            yield
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, Thorns, SpiderSpawning]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, Thorns, SpiderSpawning, TombstoneSummon, Haunted, TreeThornSummon, SpawnOnDeath]:
     curr_module.modify_class(cls)
