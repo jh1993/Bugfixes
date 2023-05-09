@@ -8071,6 +8071,9 @@ def modify_class(cls):
                     apply_minion_bonuses(self.caster.source, unit)
                     self.caster.level.add_obj(unit, p.x, p.y)
 
+        def get_description(self):
+            return "Summons %d fae thorns near the player" % self.get_stat("num_summons")
+
     if cls is SpawnOnDeath:
 
         def on_death(self, evt):
