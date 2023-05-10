@@ -3771,7 +3771,7 @@ def modify_class(cls):
                 return
 
             path = self.caster.level.get_points_in_line(Point(self.caster.x, self.caster.y), Point(x, y))
-            if len(path) < 1:
+            if len(path) < 2:
                 return
 
             start_point = path[1]
