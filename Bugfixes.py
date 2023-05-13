@@ -2199,6 +2199,40 @@ def modify_class(cls):
 
     if cls is Unit:
 
+        def get_stat(self, base, spell, attr):
+            
+
+            # Range for self targeted or melee spells does not change
+            if attr == 'range' and spell.range < 2:
+                return spell.range
+
+            bonus_total = 0
+            # Add spell specific bonus
+            bonus_total += self.spell_bonuses[type(spell)].get(attr, 0)
+
+            # Add tag bonuses
+            for tag in spell.tags:
+                bonus_total += self.tag_bonuses[tag].get(attr, 0)
+
+            # Add global bonus
+            bonus_total += self.global_bonuses.get(attr, 0)
+
+            isint = type(base) == int
+
+            if is_stat_pct(attr):
+                multiplier = (bonus_total + 100) / 100.0
+                value = base * multiplier
+                if isint:
+                    value = int(math.ceil(value))
+                return value
+
+            else:
+                value = base + bonus_total			
+                value = max(value, 0)
+                if attr in ['range', 'duration', "shot_cooldown"]:
+                    value = max(value, 1)
+                return value
+
         def get_ai_action(self):
             assert(not self.is_player_controlled)
             assert(self.is_alive())
