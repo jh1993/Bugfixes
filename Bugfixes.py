@@ -2635,10 +2635,29 @@ def modify_class(cls):
                 if stopped == "Stopped":
                     self.active_spells.remove(s)
 
-        def get_points_in_line(self, start, end, two_pass=True, find_clear=False):
+        def get_perpendicular_line(self, origin, dest, length=99):
 
-            # Always prioritize non-wall tiles if possible.
-            if not find_clear:
+            results = set([dest])
+            
+            if origin == dest:
+                return results
+
+            # reverse the slope
+            dy = dest.x - origin.x
+            dx = dest.y - origin.y
+
+            longer_len = max(abs(dy), abs(dx))
+            dx /= longer_len
+            dy /= -longer_len
+
+            line_start = Point(round(dest.x + length * dx), round(dest.y + length * dy))
+            line_end = Point(round(dest.x - length * dx), round(dest.y - length * dy))
+            return [p for p in self.get_points_in_line(line_start, line_end, two_pass=False, ignore_walls=True) if self.is_point_in_bounds(p)]
+
+        def get_points_in_line(self, start, end, two_pass=True, find_clear=False, ignore_walls=False):
+
+            # Always prioritize non-wall tiles if possible, unless we explicitly ignore walls.
+            if not find_clear and not ignore_walls:
                 clear_line = self.get_points_in_line(start, end, two_pass, find_clear=True)
                 if clear_line:
                     return clear_line
