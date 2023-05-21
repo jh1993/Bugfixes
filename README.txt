@@ -217,6 +217,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The spell queue now runs in strictly sequential order instead of allowing effects with the "same code" to jump ahead in the queue, resulting in a more predictable order of execution. If this causes slowdowns, you might need to use Xturbo mode.
 - Orb spells no longer crash if they somehow end up targeting your own tile.
 - Shot cooldown now has a minimum of 1 rather than 0.
+- When counting spells used at the end of a level, copies of a spell now count as the same spell as the original.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

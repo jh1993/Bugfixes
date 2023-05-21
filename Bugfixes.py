@@ -2626,6 +2626,37 @@ def modify_class(cls):
 
     if cls is Level:
 
+        def act_cast(self, unit, spell, x, y, pay_costs=True):		
+            assert(isinstance(unit, Unit)), "caster is not of type unit, is %s" % type(unit)
+
+            if unit.is_player_controlled:
+                found = False
+                for s in self.spell_counts:
+                    if type(s) == type(spell):
+                        self.spell_counts[s] += 1
+                        found = True
+                        break
+                if not found:
+                    self.spell_counts[spell] += 1
+
+            self.combat_log.debug("%s uses %s" % (unit.name, spell.name))
+
+            # flip sprite if needed
+            if x < unit.x:
+                unit.sprite.face_left = True
+            if x > unit.x:
+                unit.sprite.face_left = False
+
+            if pay_costs:
+                assert(spell.can_cast(x, y)), "%s trying to cast spell %s on untargetable tile %d, %d" % (unit.name, spell.name, x, y)
+                assert(spell.can_pay_costs()), "%s trying to cast spell %s, but cannot pay costs" % (unit.name, spell.name)
+
+            if pay_costs:
+                spell.pay_costs()
+            
+            self.queue_spell(spell.cast(x, y))
+            self.event_manager.raise_event(EventOnSpellCast(spell, unit, x, y), unit)
+
         def advance_spells(self):
             if not self.active_spells:
                 return
