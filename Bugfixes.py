@@ -2556,7 +2556,7 @@ def modify_class(cls):
             self.global_triggers[EventOnUnitAdded] = lambda evt: on_unit_added(self, evt)
 
         def on_unit_added(self, evt):
-            if self.should_grant(evt.unit):
+            if self.should_grant(evt.unit) and not bool([s for s in evt.unit.spells if isinstance(s, VenomSpitSpell)]):
                 add_spell(self, evt.unit)
 
         def on_advance(self):
@@ -2598,7 +2598,7 @@ def modify_class(cls):
             self.global_triggers[EventOnUnitAdded] = lambda evt: on_unit_added(self, evt)
 
         def on_unit_added(self, evt):
-            if self.should_grant(evt.unit):
+            if self.should_grant(evt.unit) and not bool([s for s in evt.unit.spells if isinstance(s, HungerLifeLeechSpell)]):
                 add_spell(self, evt.unit)
 
         def on_advance(self):
