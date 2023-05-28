@@ -2634,7 +2634,7 @@ def modify_class(cls):
             if unit.is_player_controlled:
                 found = False
                 for s in self.spell_counts:
-                    if type(s) == type(spell):
+                    if s.name == spell.name:
                         self.spell_counts[s] += 1
                         found = True
                         break
