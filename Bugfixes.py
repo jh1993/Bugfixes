@@ -5907,6 +5907,8 @@ def modify_class(cls):
 
         def on_pre_advance(self):
             self.owner.remove_buffs(CrystallographerActiveBuff)
+            if all([u.team == TEAM_PLAYER for u in self.owner.level.units]):
+                return
             self.owner.level.queue_spell(buff(self))
 
     if cls is Necrostatics:
@@ -5919,6 +5921,8 @@ def modify_class(cls):
 
         def on_pre_advance(self):
             self.owner.remove_buffs(NecrostaticStack)
+            if all([u.team == TEAM_PLAYER for u in self.owner.level.units]):
+                return
             self.owner.level.queue_spell(buff(self))
 
         def get_description(self):
