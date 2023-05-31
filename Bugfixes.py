@@ -2892,9 +2892,6 @@ def modify_class(cls):
                 while self.can_advance_spells():
                     yield self.advance_spells()
 
-                if not visual_mode:
-                    yield True
-
         def deal_damage(self, x, y, amount, damage_type, source, flash=True, penetration=0):
 
             # Auto make effects if none were already made
