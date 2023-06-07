@@ -3010,6 +3010,12 @@ def modify_class(cls):
                 self.set_default_resitances(obj)
 
                 for buff in list(obj.buffs):
+
+                    # Do not trigger on_applied() more than once.
+                    if obj.is_player_controlled:
+                        buff.subscribe()
+                        continue
+
                     # Apply unapplied buffs- these can come from Content on new units
                     could_apply = buff.apply(obj) != ABORT_BUFF_APPLY
 
@@ -3018,8 +3024,7 @@ def modify_class(cls):
                         obj.buffs.remove(obj)
 
                     # Monster buffs are all passives
-                    if not obj.is_player_controlled:
-                        buff.buff_type = BUFF_TYPE_PASSIVE
+                    buff.buff_type = BUFF_TYPE_PASSIVE
 
                 self.units.append(obj)
                 if trigger_summon_event:
@@ -3059,7 +3064,11 @@ def modify_class(cls):
 
                 # Unapply to unsubscribe
                 for buff in obj.buffs:
-                    buff.unapply()
+                    # Do not trigger on_unapplied() more than once.
+                    if obj.is_player_controlled:
+                        buff.unsubscribe()
+                    else:
+                        buff.unapply()
                 
                 if obj.Anim:
                     obj.Anim.unregister()
