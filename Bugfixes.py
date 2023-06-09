@@ -3527,6 +3527,7 @@ def modify_class(cls):
                         spirit.resists[Tags.Holy] = 100
                         spirit.resists[Tags.Dark] = -100
                         spirit.resists[Tags.Physical] = 100
+                        spirit.flying = True
                         self.summon(spirit, target=unit)
                 if no_damage:
                     self.caster.level.show_effect(point.x, point.y, Tags.Holy)
