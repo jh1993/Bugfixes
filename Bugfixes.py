@@ -6566,20 +6566,22 @@ def modify_class(cls):
 
     if cls is GeneratorBuff:
 
-        def __init__(self, spawn_func, spawn_chance, sort_dist=True, radius=3):
+        def __init__(self, spawn_func, spawn_chance, sort_dist=True, radius=3, apply_bonuses=True):
             Buff.__init__(self)
             self.spawn_func = spawn_func
             self.spawn_chance = spawn_chance
             self.example_monster = self.spawn_func()
             self.sort_dist = sort_dist
             self.radius = radius
+            self.apply_bonuses = apply_bonuses
 
         def on_advance(self):
             if random.random() < self.spawn_chance:
                 new_monster = self.spawn_func()
                 new_monster.team = self.owner.team
                 new_monster.source = self.owner.source
-                apply_minion_bonuses(self.owner.source, new_monster)
+                if self.apply_bonuses:
+                    apply_minion_bonuses(self.owner.source, new_monster)
                 self.summon(new_monster, sort_dist=self.sort_dist, radius=self.radius)
 
         def get_tooltip(self):
