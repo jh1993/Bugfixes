@@ -222,6 +222,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - If a unit dies to a fake damage event that never happened, without taking real damage, it will no longer permanently hide items on its tile or result in a potential memory leak. This will obviously never happen in the base game, but can happen in mods.
 - For consistency, Moonspeaker damage now rounds down, and no longer works when only 1 damage is dealt. This is in line with all other 50% redeal effects.
 - Your buffs that have effects when applied and unapplied will no longer trigger those effects again when you enter a new realm.
+- Lightning Bolt channeling upgrade now benefits from bonuses to channel duration.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
