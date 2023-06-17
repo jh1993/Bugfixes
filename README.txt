@@ -225,6 +225,9 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Lightning Bolt channeling upgrade now benefits from bonuses to channel duration.
 - Holy ghosts summoned by Heavenly Blast are now flying like all other ghosts.
 - Dominate description now correctly states that it's based on max HP.
+- Searing Seal description now properly states that it works with friendly fire too, and that the damage is a single hit.
+- Searing Seal now actually deals 1 damage per 4 charges instead of per 5 charges.
+- Shield Burn upgrade of Siphon Shields description clarified to state that it's a single hit.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
