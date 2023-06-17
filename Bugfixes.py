@@ -2833,10 +2833,6 @@ def modify_class(cls):
 
                 self.turn_no += 1
 
-                if any(u.team != TEAM_PLAYER for u in self.units):
-                    self.next_log_turn()
-                    self.combat_log.debug("Level %d, Turn %d begins." % (self.level_no, self.turn_no))
-
                 # Cache unit list here to enforce summoning delay
                 turn_units = list(self.units)
                 for is_player_turn in [True, False]:
@@ -2860,6 +2856,13 @@ def modify_class(cls):
                             yield self.advance_spells()
                         if not unit.is_alive():
                             continue
+
+                        # Setup logging for the next turn here so that effects triggered on the player's pre-advance
+                        # are counted in the previous turn's logs and are visible when viewed this turn before
+                        # taking any action.
+                        if unit.is_player_controlled and any(u.team != TEAM_PLAYER for u in self.units):
+                            self.next_log_turn()
+                            self.combat_log.debug("Level %d, Turn %d begins." % (self.level_no, self.turn_no))
 
                         finished_advance = False
                         while not finished_advance and unit.is_alive():
