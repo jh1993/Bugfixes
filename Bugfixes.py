@@ -10,12 +10,14 @@ from RareMonsters import *
 from Variants import *
 from RiftWizard import *
 
-import CommonContent, Spells
+import CommonContent, Spells, text
 
 import sys
 curr_module = sys.modules[__name__]
 
 import RiftWizard
+
+text.poison_desc = "[Poisoned] units take 1 [poison] damage each turn and suffer 100% healing penalty."
 
 def drain_max_hp_kill(unit, hp, source):
     if unit.max_hp > hp:
