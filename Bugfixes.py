@@ -3579,6 +3579,17 @@ def modify_class(cls):
 
     if cls is Burst:
 
+        def __init__(self, level, origin, radius, burst_cone_params=None, expand_diagonals=False, ignore_walls=False):
+            self.level = level
+            # If the origin argument is not a Point, we must make a Point from it, to avoid iterating through the origin twice.
+            self.origin = Point(origin.x, origin.y)
+            self.radius = radius
+            self.burst_cone_params = burst_cone_params
+
+            # Auto expand diagonals in cones, they dont work otherwise.
+            self.expand_diagonals = expand_diagonals if not burst_cone_params else True
+            self.ignore_walls = ignore_walls
+
         def __iter__(self):
 
             already_exploded = set([self.origin])

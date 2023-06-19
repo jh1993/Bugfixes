@@ -229,6 +229,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Searing Seal now actually deals 1 damage per 4 charges instead of per 5 charges.
 - Shield Burn upgrade of Siphon Shields description clarified to state that it's a single hit.
 - Effects triggered at the start of your turn, before you take an action, is now visible in the combat log of the previous turn. Only relevant if you use mods.
+- Bone Splinter shrine, Combust Poison, and a few other bursts no longer hit the central tile twice.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
