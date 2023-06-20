@@ -5941,6 +5941,9 @@ def modify_class(cls):
 
     if cls is Crystallographer:
 
+        def get_description(self):
+            return "Your [sorcery] spells gain [2_damage:damage] for each [frozen] or [glassified] unit."
+
         def buff(self):
             amt = 0
             for u in self.owner.level.units:
