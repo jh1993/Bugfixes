@@ -2203,6 +2203,12 @@ def modify_class(cls):
 
     if cls is Unit:
 
+        def is_alive(self):
+            # Need to prevent a scenario where a soul-jarred unit is considered dead right before
+            # being restored to 1 HP, which may cause buffs that are applied on taking damage to
+            # fail to apply.
+            return (self.cur_hp > 0 or self.has_buff(Soulbound)) and not self.killed
+
         def get_stat(self, base, spell, attr):
             
 
