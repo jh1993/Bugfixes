@@ -2163,6 +2163,9 @@ def modify_class(cls):
                 return random.choice(imps)
             else:
                 return None
+        
+        def can_threaten(self, x, y):
+            return False
 
     if cls is LightningHaloBuff:
 
