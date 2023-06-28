@@ -4292,6 +4292,50 @@ def modify_class(cls):
 
     if cls is SimpleRangedAttack:
 
+        def __init__(self, name=None, damage=1, damage_type=Tags.Physical, range=3, beam=False, onhit=None, radius=0, melt=False, 
+                    max_channel=0, cool_down=0, proj_name=None, effect=None, buff=None, buff_duration=0, cast_after_channel=False,
+                    drain=False):
+            Spell.__init__(self)
+
+            self.name = name
+
+            # Auto name bolt, ball if only one damage type.  Multiple damage types is harder.
+            if not self.name:
+                if isinstance(damage_type, Tag):
+                    if radius:
+                        self.name = "%s Ball" % damage_type.name
+                    else:
+                        self.name = "%s Bolt" % damage_type.name
+
+            if not self.name:
+                name = "Ranged Attack"
+
+            self.damage = damage
+            self.damage_type = damage_type
+            self.range = range
+            self.beam = beam
+            self.onhit = onhit
+            self.radius = radius
+            self.melt = melt
+            if self.melt:
+                self.requires_los = False
+
+            self.max_channel = max_channel
+            self.cool_down = cool_down
+            
+            self.proj_name = proj_name
+            self.effect = effect
+
+            self.buff = buff
+            self.buff_name = buff().name if buff else None
+            self.buff_duration = buff_duration
+
+            self.cast_after_channel = cast_after_channel
+            self.siege = False
+
+            self.drain = drain
+            self.suicide = False
+
         def get_ai_target(self):
 
             if self.radius:
