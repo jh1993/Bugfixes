@@ -47,6 +47,9 @@ class HydraBeam(BreathWeapon):
             self.caster.level.act_cast(self.caster, self.dragon_mage_spell, x, y, pay_costs=False)
         yield
 
+    def get_impacted_tiles(self, x, y):
+        return list(Bolt(self.caster.level, self.caster, Point(x, y)))
+
 def drain_max_hp_kill(unit, hp, source):
     if unit.max_hp > hp:
         drain_max_hp(unit, hp)
