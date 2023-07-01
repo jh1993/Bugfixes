@@ -19,6 +19,33 @@ import RiftWizard
 
 text.poison_desc = "[Poisoned] units take 1 [poison] damage each turn and suffer 100% healing penalty."
 
+class HydraBeam(BreathWeapon):
+
+    def __init__(self, spell, caster, name, damage_type, dragon_mage_spell_type=None):
+        self.spell = spell
+        BreathWeapon.__init__(self)
+        self.name = name
+        self.damage = spell.get_stat("breath_damage")
+        self.range = spell.get_stat("minion_range")
+        self.damage_type = damage_type
+        self.dragon_mage_spell = None
+        if dragon_mage_spell_type:
+            self.dragon_mage_spell = dragon_mage_spell_type()
+            self.dragon_mage_spell.caster = caster
+            self.dragon_mage_spell.owner = caster
+            self.dragon_mage_spell.max_charges = 0
+            self.dragon_mage_spell.cur_charges = 0
+            self.dragon_mage_spell.range = RANGE_GLOBAL
+            self.dragon_mage_spell.requires_los = False
+        self.description = "Beam attack. Counts as a breath weapon."
+    
+    def cast(self, x, y):
+        for p in Bolt(self.caster.level, self.caster, Point(x, y)):
+            self.per_square_effect(p.x, p.y)
+        if self.dragon_mage_spell and self.spell.get_stat("dragon_mage"):
+            self.caster.level.act_cast(self.caster, self.dragon_mage_spell, x, y, pay_costs=False)
+        yield
+
 def drain_max_hp_kill(unit, hp, source):
     if unit.max_hp > hp:
         drain_max_hp(unit, hp)
@@ -28,7 +55,7 @@ def drain_max_hp_kill(unit, hp, source):
         unit.kill(damage_event=EventOnDamaged(unit, old_hp, Tags.Dark, source))
 
 def increase_cooldown(caster, target, melee):
-    spells = [s for s in target.spells if s.cool_down and target.cool_downs.get(s, 0) < s.cool_down]
+    spells = [s for s in target.spells if s.cool_down and target.cool_downs.get(s, 0) < s.get_stat("cool_down")]
     if target.gets_clarity:
         spells = []
     if not spells:
@@ -244,9 +271,6 @@ class RotBuff(Buff):
         self.hp = 0
 
     def on_applied(self, owner):
-        self.owner.level.queue_spell(self.modify_unit())
-
-    def modify_unit(self):
         self.hp = math.floor(self.owner.max_hp*self.spell.get_stat('max_health_loss')/100)
         drain_max_hp(self.owner, self.hp)
         if Tags.Living in self.owner.tags:
@@ -256,18 +280,13 @@ class RotBuff(Buff):
             self.originally_undead = True
         else:
             self.owner.tags.append(Tags.Undead)
-        yield
     
     def on_unapplied(self):
-        self.owner.level.queue_spell(self.unmodify_unit())
-
-    def unmodify_unit(self):
         self.owner.max_hp += self.hp
         if not self.originally_undead and Tags.Undead in self.owner.tags:
             self.owner.tags.remove(Tags.Undead)
         if self.originally_living and Tags.Living not in self.owner.tags:
             self.owner.tags.append(Tags.Living)
-        yield
 
 def fix_unit(unit):
     if unit.name in bugged_units_fixer.keys():
@@ -1327,9 +1346,9 @@ def modify_class(cls):
                 if spell.cool_down > 0:
                     rem_cd = spell.caster.cool_downs.get(spell, 0)
                     if not rem_cd:
-                        fmt = ' %d turn cooldown' % spell.cool_down
+                        fmt = ' %d turn cooldown' % spell.get_stat("cool_down")
                     else:
-                        fmt = ' %d turn cooldown (%d)' % (spell.cool_down, rem_cd)
+                        fmt = ' %d turn cooldown (%d)' % (spell.get_stat("cool_down"), rem_cd)
                     self.draw_string(fmt, self.examine_display, cur_x, cur_y)
                     cur_y += linesize
                     hasattrs = True
@@ -2244,6 +2263,8 @@ def modify_class(cls):
                 value = max(value, 0)
                 if attr in ['range', 'duration', "shot_cooldown"]:
                     value = max(value, 1)
+                if attr == "cool_down":
+                    value = max(value, 2)
                 return value
 
         def get_ai_action(self):
@@ -2529,6 +2550,64 @@ def modify_class(cls):
             if self.transform_asset_name:
                 assert(self.stack_type == STACK_TYPE_TRANSFORM)
                 self.owner.transform_asset_name = self.transform_asset_name
+
+        def unapply(self):
+
+            assert(self.applied)
+            self.applied = False
+            self.unsubscribe()
+            
+            if self.owner.is_alive():
+                unmodify_unit(self)
+            else:
+                # Queue this so that all on-death effects resolve before the buff is removed.
+                self.owner.level.queue_spell(unapply_queued(self))
+
+        def unapply_queued(self):
+            unmodify_unit(self)
+            yield
+
+        def unmodify_unit(self):
+            
+            self.on_unapplied()
+
+            # TODO- put passive effect stuff aka resistances here
+
+            for dtype, resist in self.resists.items():
+                self.owner.resists[dtype] -= resist
+
+            # Unaccumulate spell bonuses
+            for attr, amt in self.global_bonuses.items():
+                self.owner.global_bonuses[attr] -= amt
+
+            for spell_class, bonuses in self.spell_bonuses.items():
+                for attr, amt in bonuses.items():
+                    self.owner.spell_bonuses[spell_class][attr] -= amt
+
+            for tag, bonuses in self.tag_bonuses.items():
+                for attr, amt in bonuses.items():
+                    self.owner.tag_bonuses[tag][attr] -= amt
+
+
+            # This is an intersting idea but it causes lots of race conditions when writing death triggers
+            #self.owner = None
+
+
+            spells_from_other_buffs = [s.name for b in self.owner.buffs for s in b.spells if b != self]
+            for spell in self.owner.spells:
+
+                # Remove all spells granted only by this buff
+                if spell.added_by_buff and spell.name not in spells_from_other_buffs:
+                    self.owner.remove_spell(spell)
+
+                self.unmodify_spell(spell)
+
+            # Modify sprite on transforms
+            if self.transform_asset_name:
+                assert(self.stack_type == STACK_TYPE_TRANSFORM)
+                assert(self.transform_asset_name == self.owner.transform_asset_name)
+                self.owner.transform_asset_name = None
+                self.owner.Transform_Anim = None
 
     if cls is HallowFlesh:
 
@@ -3743,23 +3822,15 @@ def modify_class(cls):
                 self.resists[Tags.Arcane] = self.spell.get_stat('resist')
 
         def on_applied(self, owner):
-            self.owner.level.queue_spell(modify_unit(self))
-        
-        def modify_unit(self):
             if Tags.Metallic not in self.owner.tags:
                 self.nonmetal = True
                 self.owner.tags.append(Tags.Metallic)
             else:
                 self.nonmetal = False
-            yield
 
         def on_unapplied(self):
-            self.owner.level.queue_spell(unmodify_unit(self))
-        
-        def unmodify_unit(self):
             if self.nonmetal:
                 self.owner.tags.remove(Tags.Metallic)
-            yield
 
     if cls is HolyShieldBuff:
 
@@ -4045,31 +4116,20 @@ def modify_class(cls):
             self.stack_type = STACK_INTENSITY
             self.buff_type = BUFF_TYPE_BLESS
             self.global_bonuses["damage"] = 12
+            self.tag_bonuses[Tags.Dragon]["cool_down"] = -1
+            self.hp = self.spell.get_stat("hp_bonus")
 
         def on_applied(self, owner):
-
-            owner.cur_hp += self.spell.get_stat('hp_bonus')
-            owner.max_hp += self.spell.get_stat('hp_bonus')
-
-            for spell in owner.spells:
-                if isinstance(spell, BreathWeapon):
-                    spell.cool_down -= 1
-                    spell.cool_down = max(0, spell.cool_down)
+            self.owner.max_hp += self.hp
+            self.owner.deal_damage(-self.hp, Tags.Heal, self.spell)
 
         def on_unapplied(self):
-
-            self.owner.max_hp -= self.spell.get_stat('hp_bonus')
-            self.owner.cur_hp = min(self.owner.max_hp, self.owner.cur_hp)
-
-            for spell in self.owner.spells:
-                if isinstance(spell, BreathWeapon):
-                    spell.cool_down += 1
-                    spell.cool_down = max(0, spell.cool_down)
+            drain_max_hp(self.owner, self.hp)
 
     if cls is DragonRoarSpell:
 
         def get_description(self):
-            return "All allied dragons gain [{hp_bonus}_max_HP:minion_health], [12:damage] attack damage, and [{cooldown_reduction}_turn:duration] cooldown reduction.\nThese bonuses stack, and each stack lasts [{duration}_turns:duration].".format(**self.fmt_dict())
+            return "All allied dragons gain [{hp_bonus}_max_HP:minion_health], [12:damage] attack damage, and [1_turn:duration] cooldown reduction to their breath weapons, to a minimum of 2.\nThese bonuses stack, and each stack lasts [{duration}_turns:duration].".format(**self.fmt_dict())
 
     if cls is HungerLifeLeechSpell:
 
@@ -4547,7 +4607,7 @@ def modify_class(cls):
                 tp_target = random.choice(tp_targets)
                 self.caster.level.act_move(self.caster, tp_target.x, tp_target.y, teleport=True)
                 self.caster.level.show_effect(self.caster.x, self.caster.y, Tags.Dark)
-            self.caster.apply_buff(CowardBuff(), self.cool_down)
+            self.caster.apply_buff(CowardBuff(), self.get_stat("cool_down"))
             return
 
     if cls is WizardBloodboil:
@@ -6782,6 +6842,19 @@ def modify_class(cls):
 
     if cls is Spell:
 
+        def pay_costs(self):
+
+            if self.item:
+                self.caster.remove_item(self.item)
+                return
+
+            self.caster.mana = self.caster.mana - self.get_mana_cost()
+            if self.cool_down > 0:
+                self.caster.cool_downs[self] = self.get_stat("cool_down")
+
+            if self.max_charges:
+                self.cur_charges -= 1
+
         def get_stat(self, attr, base=None):
             statholder = self.statholder or self.caster
             
@@ -8480,9 +8553,20 @@ def modify_class(cls):
             self.copying = False
             yield
 
+    if cls is BreathWeapon:
+
+        def __init__(self):
+            Spell.__init__(self)
+            self.range = 7
+            self.cool_down = 3
+            self.angle = math.pi / 6.0
+            self.ignore_walls = False
+            # Make this have the dragon tag so that Dragon Roar cooldown reduction works properly.
+            self.tags = [Tags.Dragon]
+
     for func_name, func in [(key, value) for key, value in locals().items() if callable(value)]:
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, SearingSealSpell, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, Thorns, SpiderSpawning, TombstoneSummon, Haunted, TreeThornSummon, SpawnOnDeath, OperateSiege, UnitSprite, Moonspeaker, LightningBoltSpell, Dominate, ShieldSiphon, IceTap]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, SearingSealSpell, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, Thorns, SpiderSpawning, TombstoneSummon, Haunted, TreeThornSummon, SpawnOnDeath, OperateSiege, UnitSprite, Moonspeaker, LightningBoltSpell, Dominate, ShieldSiphon, IceTap, BreathWeapon]:
     curr_module.modify_class(cls)

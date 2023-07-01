@@ -5,9 +5,9 @@ To install this mod, click on the green "Code" button on this page, then "Downlo
 This mod requires AAA_Loader by Bord Listian: https://github.com/DaedalusGame/AAA_Loader
 Visit the above link and install it the same way you install this mod, except that you rename the "AAA_Loader-master" folder to "AAA_Loader" before putting it into the mods folder.
 
-This mod may be partially incompatible with API_Universal until I make my own fork of it to work out the incompatibilities, which may be an annoying and tedious task so it may take a while. Until then, use API_Universal at your own risk.
+This mod is INCOMPATIBLE with API_Universal. That mod is old and no longer being updated, and I cannot make a compatibility patch without going through its entire code and more or less taking over maintenance duty, which I do not have the motivation to do. If you try to use it together with this mod, things WILL break under the hood even if they initially appear to work fine. I will offer no support to any problems that occur if you try to do it anyways.
 
-This mod fixes a number of things that I believe to be almost certainly bugs or unintended behavior. It also adds a few invisible things under the hood that some of my other mods require to run, since I have no better place to put them and this mod is required by said other mod to begin with.
+This mod fixes a number of things that I believe to be almost certainly bugs or unintended behavior. It also adds a few invisible things under the hood that some of my other mods require to run, since I have no better place to put them and this mod is required by said other mods to begin with.
 
 - The behavior of Frostbite + Ghostfire depended on the order in which you took the two skills. Now you always get a fire ghost when using fire damage to unfreeze an enemy.
 - Mercurial Vengeance and Toxic Fumes are now properly passive effects, meaning they're not lost upon reincarnation and can't be dispelled.
@@ -201,7 +201,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Buffs no longer subscribe their event triggers twice. This matters for my No More Scams mod.
 - Minions no longer refuse to approach temporary enemies.
 - Righteous March now correctly works with units in LoS of the dead enemy, instead of in LoS of the wizard.
-- The max HP changes and tag changes of Hollow Flesh and Ironize now persist until all current on-death effects have resolved before being removed.
 - Petrification Aura no longer ignores already petrified enemies when reapplying the debuff.
 - Restless Dead junk golems now count as minions summoned by the spell.
 - Melee retaliation now works if the unit is damaged by a melee or leap attack, not only if the unit is targeted by such an attack.
@@ -236,6 +235,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Crystal Power now properly states that it works with all frozen units, not just enemies.
 - A soul-jarred unit is no longer considered dead right before it's restored to 1 HP.
 - For consistency, basic ranged attacks of non-player units no longer have tags equal to their damage types. No other basic non-player attacks have tags.
+- Dragon Roar can no longer reduce a dragon's breath cooldown below 2, and no longer makes the cooldown abnormally long when unapplied.
+- All modifications done to a unit (resists, damage, etc.) from buffs now persist until all current on-death effects have resolved before being removed.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
