@@ -37,6 +37,7 @@ class HydraBeam(BreathWeapon):
             self.dragon_mage_spell.cur_charges = 0
             self.dragon_mage_spell.range = RANGE_GLOBAL
             self.dragon_mage_spell.requires_los = False
+            self.dragon_mage_spell.statholder = self.spell.caster
         self.description = "Beam attack. Counts as a breath weapon."
     
     def cast(self, x, y):
