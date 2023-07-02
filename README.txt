@@ -237,6 +237,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - For consistency, basic ranged attacks of non-player units no longer have tags equal to their damage types. No other basic non-player attacks have tags.
 - Dragon Roar can no longer reduce a dragon's breath cooldown below 2, and no longer makes the cooldown abnormally long when unapplied.
 - All modifications done to a unit (resists, damage, etc.) from buffs now persist until all current on-death effects have resolved before being removed.
+- Storm drake thunderstorm cloud damage is now attributed to the breath weapon itself.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

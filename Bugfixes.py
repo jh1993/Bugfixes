@@ -4020,7 +4020,9 @@ def modify_class(cls):
             return "Breathes a cone of storm clouds, dealing %d damage" % self.get_stat("damage")
 
         def per_square_effect(self, x, y):
-            self.caster.level.add_obj(StormCloud(self.caster, self.get_stat("damage")), x, y)
+            cloud = StormCloud(self.caster, self.get_stat("damage"))
+            cloud.source = self
+            self.caster.level.add_obj(cloud, x, y)
 
     if cls is FireBreath:
 
