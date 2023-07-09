@@ -2757,10 +2757,10 @@ def modify_class(cls):
             if not self.active_spells:
                 return
 
-            for s in list(self.active_spells):
-                stopped = next(s, "Stopped")
-                if stopped == "Stopped":
-                    self.active_spells.remove(s)
+            s = self.active_spells[0]
+            stopped = next(s, "Stopped")
+            if stopped == "Stopped":
+                self.active_spells.remove(s)
 
         def get_perpendicular_line(self, origin, dest, length=99):
 
