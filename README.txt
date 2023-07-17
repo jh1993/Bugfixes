@@ -240,6 +240,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Storm drake thunderstorm cloud damage is now attributed to the breath weapon itself.
 - The player can no longer spawn stuck inside walls or chasms if a trial alters terrain.
 - Units can now be raised as skeletons more than once after they reincarnate.
+- Dracolich skeleton raising now has priority over necromancer skeleton raising.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

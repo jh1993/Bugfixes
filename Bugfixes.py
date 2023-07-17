@@ -4074,11 +4074,13 @@ def modify_class(cls):
 
         def per_square_effect(self, x, y):
             unit = self.caster.level.get_unit_at(x, y)
-            
+            self.caster.level.queue_spell(try_raise(self, unit))
             self.caster.level.deal_damage(x, y, self.get_stat('damage'), self.damage_type, self)
 
+        def try_raise(self, unit):
             if unit and not unit.is_alive():
                 curr_module.raise_skeleton(self.caster, unit)
+            yield
 
     if cls is GreyGorgonBreath:
 
@@ -4740,6 +4742,18 @@ def modify_class(cls):
             self.global_triggers[EventOnDeath] = self.on_death
             self.radius = 10
             self.color = Tags.Undead.color
+
+        def on_death(self, death_event):
+            # Previously, Restless Dead always had precedence over enemy necromancers because it
+            # was bugged to trigger on taking fatal damage instead of on death.
+            # To preserve that behavior, manually give precedence to Restless Dead.
+            if self.owner.level.player_unit.has_buff(RestlessDeadBuff):
+                return
+            if Tags.Living in death_event.unit.tags: 
+                self.owner.level.queue_spell(self.raise_skeleton(death_event.unit))
+
+        def get_tooltip(self):
+            return "Whenever a living unit dies, raises that unit as a skeleton unless it has already been raised."
 
     if cls is SporeBeastBuff:
 
