@@ -3254,6 +3254,7 @@ def modify_class(cls):
 
         def respawn(self):
             self.owner.killed = False
+            self.owner.has_been_raised = False
 
             respawn_points = [p for p in self.owner.level.iter_tiles() if self.owner.level.can_stand(p.x, p.y, self.owner)]
             if respawn_points:
