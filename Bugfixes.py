@@ -8623,7 +8623,7 @@ def modify_class(cls):
                     m.on_levelgen(self)
             
             # Mutators may alter terrain, so find a proper starting point again afterwards.
-            choices = [t for t in self.level.iter_tiles() if t.can_walk]
+            choices = [t for t in self.level.iter_tiles() if t.can_walk and not t.unit and not t.prop]
             if choices:
                 self.level.start_pos = self.random.choice(choices)
             if not choices:
