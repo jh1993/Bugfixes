@@ -3162,7 +3162,7 @@ def modify_class(cls):
                 # Unapply to unsubscribe
                 for buff in obj.buffs:
                     # Do not trigger on_unapplied() more than once.
-                    if obj.is_player_controlled:
+                    if obj.is_player_controlled and obj.is_alive():
                         buff.unsubscribe()
                     else:
                         buff.unapply()
