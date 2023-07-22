@@ -8622,13 +8622,15 @@ def modify_class(cls):
                 for m in self.game.mutators:
                     m.on_levelgen(self)
             
-            # Mutators may alter terrain, so find a proper starting point again afterwards.
-            choices = [t for t in self.level.iter_tiles() if t.can_walk and not t.unit and not t.prop]
-            if choices:
-                self.level.start_pos = self.random.choice(choices)
-            if not choices:
-                self.level.make_floor(0, 0,)
-                self.level.start_pos = Point(0, 0)
+            # Mutators may alter terrain, so find a proper starting point again afterwards if needed.
+            start = self.level.start_pos
+            if not start.can_walk or start.unit or start.prop:
+                choices = [t for t in self.level.iter_tiles() if t.can_walk and not t.unit and not t.prop]
+                if choices:
+                    self.level.start_pos = self.random.choice(choices)
+                if not choices:
+                    self.level.make_floor(0, 0,)
+                    self.level.start_pos = Point(0, 0)
 
             # Record info per tile so that mordred corruption works
             for tile in self.level.iter_tiles():
