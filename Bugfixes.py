@@ -19,6 +19,20 @@ import RiftWizard
 
 text.poison_desc = "[Poisoned] units take 1 [poison] damage each turn and suffer 100% healing penalty."
 
+class FreezeDependentBuff(Buff):
+
+    def on_pre_advance(self):
+        freeze = self.owner.get_buff(FrozenBuff)
+        if freeze:
+            self.turns_left = max(self.turns_left, freeze.turns_left)
+
+    def on_unapplied(self):
+        if self.turns_left <= 0:
+            return
+        buff = self.owner.get_buff(FrozenBuff)
+        if buff:
+            self.owner.apply_buff(self, self.turns_left)
+
 class HydraBeam(BreathWeapon):
 
     def __init__(self, spell, caster, name, damage_type, dragon_mage_spell_type=None):
