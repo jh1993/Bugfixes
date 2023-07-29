@@ -157,7 +157,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Non-player spells that have multiple damage types now display their damage stats correctly when there are damage bonuses.
 - Melee attacks, leap attacks, and burst attacks can now have randomized damage types. The UI display always implied that they could, except the game used to just crash if a melee attack was assigned randomized damage types.
 - The UI can now display attacks that deal all damage types instead of randomly one of the damage types.
-- If a unit gains stun immunity while stunned, the stun will be removed. Can't happen in vanilla but can happen in mods.
 - Shorter-duration blind will no longer overwrite longer-duration ones.
 - Units with custom sprites now update their sprites properly if they gain transformation buffs.
 - Chaos Quill scribe scrolls spell now benefits from num summons bonuses.
@@ -243,6 +242,9 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Dracolich skeleton raising now has priority over necromancer skeleton raising.
 - Starfire Sorcerer's beam now deals the correct damage types.
 - Night hag life siphon now states that it deals dark damage.
+- The stun component of Watcher Form is now considered a buff.
+- If a unit gains clarity while stunned, the stun will be removed if it's a debuff. Can't happen in vanilla but can happen in mods.
+- Stun effects that are not debuffs (e.g. Watcher Form) no longer give clarity or are prevented by clarity.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
