@@ -4371,7 +4371,7 @@ def modify_class(cls):
     if cls is MonsterTeleport:
 
         def cast_instant(self, x, y):
-            randomly_teleport(self.caster, self.get_stat("range"), flash=True, requires_los=self.self.get_stat("requires_los"))
+            randomly_teleport(self.caster, self.get_stat("range"), flash=True, requires_los=self.get_stat("requires_los"))
 
     if cls is SimpleRangedAttack:
 
