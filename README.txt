@@ -245,6 +245,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - The stun component of Watcher Form is now considered a buff.
 - If a unit gains clarity while stunned, the stun will be removed if it's a debuff. Can't happen in vanilla but can happen in mods.
 - Stun effects that are not debuffs (e.g. Watcher Form) no longer give clarity or are prevented by clarity.
+- Archon beams are now considered to deal lightning damage and no longer target lightning-immune enemies. To get around this restriction, get my No More Scams mod.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

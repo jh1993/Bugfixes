@@ -7047,12 +7047,18 @@ def modify_class(cls):
 
     if cls is ArchonLightning:
 
+        def on_init(self):
+            self.name = "Archon Lightning"
+            self.description = "Beam attack\nShields allies in the Aoe"
+            self.damage_type = Tags.Lightning
+
         def cast_instant(self, x, y):
             damage = self.get_stat('damage')
             for p in self.caster.level.get_points_in_line(self.caster, Point(x, y))[1:]:
                 unit = self.caster.level.get_unit_at(p.x, p.y)
                 if unit and not are_hostile(unit, self.caster):
                     unit.add_shields(1)
+                    self.caster.level.show_effect(p.x, p.y, Tags.Lightning)
                 else:
                     self.caster.level.deal_damage(p.x, p.y, damage, Tags.Lightning, self)
 
