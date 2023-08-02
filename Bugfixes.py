@@ -7842,31 +7842,24 @@ def modify_class(cls):
         def on_init(self):
             self.name = "Last Word"
 
-            self.description = "The turn after you finish a level, gain a charge of each of your [word] spells."
+            self.description = "Whenever you finish a level, gain a charge of each of your [word] spells."
             self.tags = [Tags.Word]
             self.level = 5
             self.triggered = False
             self.owner_triggers[EventOnUnitAdded] = lambda evt: on_unit_added(self, evt)
 
-        def on_advance(self):
+        def on_pre_advance(self):
             if self.triggered:
                 return
             if not all(u.team == TEAM_PLAYER for u in self.owner.level.units):
                 return
             self.triggered = True
-            refill(self)
-
-        def on_unit_added(self, evt):
-            # Just in case the player is standing on a portal when the level ends, and immediately goes to the next level.
-            if not self.triggered:
-                refill(self)
-            self.triggered = False
-
-        def refill(self):
             words = [s for s in self.owner.spells if Tags.Word in s.tags and s.cur_charges < s.get_stat('max_charges')]
             for word in words:
                 word.cur_charges += 1
-            self.triggered = True
+
+        def on_unit_added(self, evt):
+            self.triggered = False
 
     if cls is BerserkShrineBuff:
 
