@@ -8173,6 +8173,17 @@ def modify_class(cls):
             if evt.unit is self.guardian and not self.reincarnation:
                 self.owner.remove_buff(self)
 
+        def on_self_damage(self, damage):
+            # Do not protect if guardian is gone.  This can happen if the guardian is banished by mordred.
+            if not self.guardian.is_alive():
+                self.owner.remove_buff(self)
+                return
+
+            # Only activate if the owner's killed flag isn't true, because the owner may survive damage
+            # then get killed instantly without taking damage.
+            if self.owner.cur_hp <= 0 and not self.owner.killed:
+                self.owner.cur_hp = 1
+
     if cls is Starcharge:
 
         def on_advance(self):
