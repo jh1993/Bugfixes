@@ -10,7 +10,7 @@ from RareMonsters import *
 from Variants import *
 from RiftWizard import *
 
-import CommonContent, Spells, text
+import CommonContent, Spells, text, LevelGen
 
 import sys
 curr_module = sys.modules[__name__]
@@ -18,6 +18,18 @@ curr_module = sys.modules[__name__]
 import RiftWizard
 
 text.poison_desc = "[Poisoned] units take 1 [poison] damage each turn and suffer 100% healing penalty."
+
+def record(monster):
+    if monster.name not in seen_monster_names:
+        all_monsters.append(monster)
+        seen_monster_names.add(monster.name)
+
+        for buff in monster.buffs:
+            if not isinstance(buff, RespawnAs):
+                continue
+            record(buff.spawner())
+
+LevelGen.record = curr_module.record
 
 class FreezeDependentBuff(Buff):
 

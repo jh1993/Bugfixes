@@ -247,6 +247,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Stun effects that are not debuffs (e.g. Watcher Form) no longer give clarity or are prevented by clarity.
 - Archon beams are now considered to deal lightning damage and no longer target lightning-immune enemies. To get around this restriction, get my No More Scams mod.
 - Soul jar no longer restores its owner to 1 HP if its owner is instantly killed without taking damage.
+- The giant snakes that giant chimeras respawn into are now recorded in the bestiary. Similarly for all monsters that can respawn into more than one monster at the same time.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
