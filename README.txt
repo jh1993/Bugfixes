@@ -178,7 +178,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Touched by Sorcery buffs now have correct icons for all damage types in the base game, and will not crash even if new damage types are used.
 - Giant fire bomber explosion now has the correct damage type for the purpose of UI display and AI targeting.
 - Hypocrisy of the same damage type can no longer erroneously stack if you cast more than one spell in a turn.
-- Faery arcanists are now flying.
+- Faery arcanists and the Mischief Maker are now flying.
 - Magnetize now determines whether it's a buff or debuff before it's applied, which makes it behave correctly on units that are immune to buffs or debuffs.
 - The game no longer crashes if you gain a tag-specific bonus to blindcasting. Not possible in the base game but possible with mods.
 - If a slime gains more max HP than the amount needed to split, it will now shed as much excess HP as possible and produce the appropriate number of new slimes, instead of losing half HP and only producing one new slime.

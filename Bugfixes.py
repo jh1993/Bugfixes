@@ -371,6 +371,7 @@ def fix_mischief_maker(unit):
             apply_minion_bonuses(caster.source, thorn)
             caster.level.summon(caster, thorn, target)
     unit.spells[0].onhit = ThornTrouble
+    unit.flying = True
 
 def fix_ghostly_spikeball(unit):
     unit.tags.append(Tags.Undead)
