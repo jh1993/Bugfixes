@@ -16,7 +16,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Thunder Strike Storm Power upgrade now properly stuns for twice the duration.
 - Orbs no longer disappear when completely surrounded. They still disappear when reaching their destinations.
 - Trying to examine upgrades on Orb Control no longer crashes the game.
-- Hibernation will now remove itself if a unit loses the living tag. Only possible with Hollow Flesh, but still a bug.
+- Hibernation will now remove itself if a unit loses the living tag.
 - Bone Wizard, Idol of Sorcery, Gemini Twin, Yggdrasil, Tombstone, Red Rider, Night Hag, Tablets, Volcano Turtle, Jack-o-Lantern, Pillar of Worms, Fallen Angel, Translocator, phoenixes, goatias, and tablets now all show their threat areas appropriately, or at least more helpfully.
 - If an ability is on cooldown then it won't show up in threatened areas.
 - Multicast used to not work if you cast the last charge of a spell.
@@ -28,7 +28,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Lightning Halo now tracks its damage properly for shrines, and no longer double-hits on cast.
 - Swamp Queen's attack is no longer limited to only poisoning living targets.
 - All the new idols added in the most recent update now have correct icons.
-- Hibernation no longer says "unnamed buff" in the combat log.
+- Hibernation no longer says "unnamed buff" in the combat log. Its healing is properly sourced to the skill.
 - Idol of Clarity will now remove berserk properly.
 - Unit.get_buff() will now properly match subclasses of the class of buff you're trying to get. This probably won't matter much in regular play, but will matter for modded content that makes subclasses of certain buffs.
 - The hallowed earth elementals summoned by the Earth Troll Priest now have the correct tags.
@@ -248,6 +248,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Archon beams are now considered to deal lightning damage and no longer target lightning-immune enemies. To get around this restriction, get my No More Scams mod.
 - Soul jar no longer restores its owner to 1 HP if its owner is instantly killed without taking damage.
 - The giant snakes that giant chimeras respawn into are now recorded in the bestiary. Similarly for all monsters that can respawn into more than one monster at the same time.
+- Hibernation can now refresh freeze duration on your minions, and benefits from duration bonuses.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

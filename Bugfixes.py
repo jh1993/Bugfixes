@@ -2093,25 +2093,53 @@ def modify_class(cls):
 
     if cls is HibernationBuff:
 
+        def __init__(self, upgrade):
+            self.upgrade = upgrade
+            Buff.__init__(self)
+
         def on_init(self):
             self.buff_type = BUFF_TYPE_PASSIVE
             self.resists[Tags.Ice] = 75
             self.owner_triggers[EventOnDamaged] = self.on_damaged
-            self.name = "Hibernation"
 
         def on_pre_advance(self):
             if Tags.Living not in self.owner.tags:
                 self.owner.remove_buff(self)
                 return
             if self.owner.has_buff(FrozenBuff):
-                self.owner.deal_damage(-15, Tags.Heal, self)
+                self.owner.deal_damage(-15, Tags.Heal, self.upgrade)
+
+        def on_damaged(self, evt):
+            if evt.damage_type == Tags.Ice:
+                self.owner.apply_buff(FrozenBuff(), self.upgrade.get_stat("duration"))
 
     if cls is Hibernation:
+
+        def on_init(self):
+            self.name = "Hibernation"
+            self.global_triggers[EventOnUnitAdded] = self.on_unit_add
+            self.tags = [Tags.Ice, Tags.Nature]
+            self.level = 4
+            self.duration = 3
+
+        def get_description(self):
+            return ("Your living minions gain [75_ice:ice] resist.\n"
+                    "Your living minions freeze for [{duration}_turns:duration] upon taking ice damage.\n"
+                    "Your living minions heal for [15_HP:heal] each turn while [frozen].\n").format(**self.fmt_dict())
+
+        def on_unit_add(self, evt):
+            if are_hostile(self.owner, evt.unit):
+                return
+            if self.owner == evt.unit:
+                return
+            if Tags.Living not in evt.unit.tags:
+                return
+            evt.unit.apply_buff(HibernationBuff(self))
 
         def on_advance(self):
             for unit in [unit for unit in self.owner.level.units if unit is not self.owner and not are_hostile(self.owner, unit)]:
                 if Tags.Living in unit.tags and not unit.has_buff(HibernationBuff):
-                    unit.apply_buff(HibernationBuff())
+                    unit.apply_buff(HibernationBuff(self))
 
     if cls is MulticastBuff:
 
