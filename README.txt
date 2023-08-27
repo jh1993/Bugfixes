@@ -200,7 +200,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Buffs no longer subscribe their event triggers twice. This matters for my No More Scams mod.
 - Minions no longer refuse to approach temporary enemies.
 - Righteous March now correctly works with units in LoS of the dead enemy, instead of in LoS of the wizard.
-- Petrification Aura no longer ignores already petrified enemies when reapplying the debuff.
 - Restless Dead junk golems now count as minions summoned by the spell.
 - Melee retaliation now works if the unit is damaged by a melee or leap attack, not only if the unit is targeted by such an attack.
 - Idol of Clarity will now only remove stun and berserk that are classified as debuffs, and will not stop looking if it encounters an instance of stun or berserk that isn't a debuff.

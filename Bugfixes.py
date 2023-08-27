@@ -3851,27 +3851,6 @@ def modify_class(cls):
             self.owner_triggers[EventOnPass] = self.on_pass
             self.color = Tags.Fire.color
 
-    if cls is StoneAuraBuff:
-
-        def on_init(self):
-            self.name = "Petrification Aura"
-            self.description = "%s nearby enemies each turn" % ("Glassify" if self.spell.get_stat("glassify") else "Petrify")
-            self.color = Tags.Glass.color if self.spell.get_stat("glassify") else Color(180, 180, 180)
-
-        def on_advance(self):
-            BuffClass = GlassPetrifyBuff if self.spell.get_stat('glassify') else PetrifyBuff
-            units = [u for u in self.owner.level.get_units_in_ball(self.owner, self.spell.get_stat('radius'))]
-            random.shuffle(units)
-            stoned = 0
-            for u in units:
-                if not are_hostile(self.owner, u):
-                    continue
-                u.apply_buff(BuffClass(), self.spell.get_stat('petrify_duration'))
-                stoned += 1
-
-                if stoned >= self.spell.get_stat('num_targets'):
-                    break
-
     if cls is IronSkinBuff:
 
         def on_init(self):
