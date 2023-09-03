@@ -3087,7 +3087,9 @@ def modify_class(cls):
                 return 0
 
             amount = min(amount, unit.cur_hp)
-            unit.cur_hp = unit.cur_hp - amount
+            # In case the unit is killed by a pre-damaged event triggered by a heal.
+            if unit.is_alive():
+                unit.cur_hp = unit.cur_hp - amount
 
             if amount > 0:
                 self.combat_log.debug("%s took %d %s damage from %s" % (unit.name, amount, damage_type.name, source.name))
