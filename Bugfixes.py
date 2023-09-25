@@ -8660,6 +8660,114 @@ def modify_class(cls):
 
     if cls is LevelGenerator:
 
+        def populate_level(self):
+
+            for i in range(self.num_exits):
+                if not self.empty_spawn_points:
+                    break
+                if self.wall_spawn_points:
+                    exit_loc = self.wall_spawn_points.pop()
+                else:
+                    exit_loc = self.empty_spawn_points.pop()
+                exit = Portal(self.make_child_generator())
+                self.level.make_floor(exit_loc.x, exit_loc.y)
+                self.level.add_prop(exit, exit_loc.x, exit_loc.y)
+
+            for i in range(self.num_monsters):
+                if not self.empty_spawn_points:
+                    break
+                spawner, cost = self.random.choice(self.spawn_options)
+
+                spawn_point = self.empty_spawn_points.pop()
+
+                obj = spawner()
+
+                unit = self.level.get_unit_at(*spawn_point)
+                if unit:
+                    print(unit.name)
+                self.level.add_obj(obj, spawn_point.x, spawn_point.y)
+
+            for i in range(self.num_elites):
+                if not self.empty_spawn_points:
+                    break
+                spawner = self.elite_spawn
+
+                obj = spawner()
+                spawn_point = self.empty_spawn_points.pop()
+                self.level.add_obj(obj, spawn_point.x, spawn_point.y)
+
+            for i in range(self.num_generators):
+                if not self.empty_spawn_points:
+                    break
+                if self.wall_spawn_points:
+                    spawn_point = self.wall_spawn_points.pop()
+                else:
+                    spawn_point = self.empty_spawn_points.pop()
+                self.level.make_floor(spawn_point.x, spawn_point.y)
+
+                spawner, cost = self.random.choice(self.spawn_options)
+
+                obj = MonsterSpawner(spawner)
+                obj.max_hp = 19 + cost * 8
+                self.level.add_obj(obj, spawn_point.x, spawn_point.y)
+
+            
+            for item in self.items:
+
+                if not self.empty_spawn_points:
+                    break
+                if self.wall_spawn_points:
+                    p = self.wall_spawn_points.pop()
+                else:
+                    p = self.empty_spawn_points.pop()
+                self.level.make_floor(p.x, p.y)
+
+                prop = make_consumable_pickup(item)
+                self.level.add_prop(prop, p.x, p.y)
+
+            for i in range(self.num_hp_upgrades):
+                if not self.empty_spawn_points:
+                    break
+                p = self.empty_spawn_points.pop()
+                self.level.add_prop(HeartDot(), p.x, p.y)
+
+            if self.shrine:
+                if self.empty_spawn_points:
+                    p = self.empty_spawn_points.pop()
+                    self.level.add_prop(self.shrine, p.x, p.y)
+
+            if self.extra_circle:
+                if self.empty_spawn_points:
+                    p = self.empty_spawn_points.pop()
+                    self.level.add_prop(self.extra_circle, p.x, p.y)
+
+            for i in range(self.num_xp):
+                
+                if not self.empty_spawn_points:
+                    break
+
+                spawn_point = self.empty_spawn_points.pop()
+
+                pickup = ManaDot()
+
+                self.level.add_prop(pickup, spawn_point.x, spawn_point.y)
+
+            for s in self.scroll_spells:
+
+                if not self.empty_spawn_points:
+                    break
+
+                spawn_point = self.empty_spawn_points.pop()
+                self.level.add_prop(SpellScroll(s), spawn_point.x, spawn_point.y)
+
+            for boss in self.bosses:
+                if not self.empty_spawn_points:
+                    break
+
+                spawn_point = self.empty_spawn_points.pop()
+                
+                self.level.add_obj(boss, spawn_point.x, spawn_point.y)
+
         def make_level(self):
 
             level_logger.debug("\nGenerating level for %d" % self.difficulty)
