@@ -253,6 +253,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - When checking whether a unit can swap with another unit, it now properly checks the swapped unit's destination tile.
 - Bone Wizard's bone swap now properly checks whether the target unit can swap with the caster.
 - Prevented potential crashes during level generation.
+- A flying fleeing unit on a chasm will no longer try to swap places with a non-flying unit.
+- If the player is moved onto an open portal outside of their turn, they will no longer automatically enter the portal.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
