@@ -151,6 +151,15 @@ class EventOnDamagedPenetration:
         self.source = evt.source
         self.penetration = penetration
 
+class EventOnMovedOldLocation:
+    def __init__(self, evt, old_x, old_y):
+        self.unit = evt.unit
+        self.x = evt.x
+        self.y = evt.y
+        self.teleport = evt.teleport
+        self.old_x = old_x
+        self.old_y = old_y
+
 class MinionBuffAura(Buff):
 
     def __init__(self, buff_class, qualifies, name, minion_desc):
@@ -2776,6 +2785,68 @@ def modify_class(cls):
             self.caster.apply_buff(buff, self.get_stat('duration'))
 
     if cls is Level:
+
+        def act_move(self, unit, x, y, teleport=False, leap=False, force_swap=False):
+            # Do nothing if something tries to move a dead unit- a spell or buff for instance
+            if not unit.is_alive():
+                return
+
+            assert(isinstance(unit, Unit))
+            
+            if not leap:
+                assert(self.can_move(unit, x, y, teleport=teleport, force_swap=force_swap))
+
+            assert(unit.is_alive())
+
+            if unit.is_player_controlled:
+                prop = self.tiles[unit.x][unit.y].prop
+                if prop:
+                    prop.on_player_exit(unit)
+
+            # flip sprite if needed
+            if x < unit.x:
+                unit.sprite.face_left = True
+            if x > unit.x:
+                unit.sprite.face_left = False
+
+            # allow swaps
+            swapper = self.tiles[x][y].unit
+
+            oldx = unit.x
+            oldy = unit.y
+
+            self.tiles[unit.x][unit.y].unit = None
+            unit.x = x
+            unit.y = y
+
+            self.tiles[x][y].unit = unit
+
+            # allow swaps
+            if swapper:
+                self.tiles[oldx][oldy].unit = swapper
+                swapper.x = oldx
+                swapper.y = oldy
+                self.event_manager.raise_event(EventOnMovedOldLocation(EventOnMoved(swapper, oldx, oldy, teleport=teleport), x, y), swapper)			
+
+                # Fix perma circle on swap
+                if swapper.is_player_controlled:
+                    prop = self.tiles[swapper.x][swapper.y].prop
+                    if prop:
+                        prop.on_player_exit(swapper)
+
+
+            self.event_manager.raise_event(EventOnMovedOldLocation(EventOnMoved(unit, x, y, teleport=teleport), oldx, oldy), unit)
+
+            
+            prop = self.tiles[x][y].prop
+            if prop:
+                if unit.is_player_controlled:
+                    prop.on_player_enter(unit)
+                prop.on_unit_enter(unit)
+
+            cloud = self.tiles[x][y].cloud
+            if cloud:
+                cloud.on_unit_enter(unit)
 
         def can_move(self, unit, x, y, teleport=False, force_swap=False):
 
@@ -6854,6 +6925,10 @@ def modify_class(cls):
                 event_type = EventOnPreDamaged
             elif event_type == EventOnDamagedPenetration:
                 event_type = EventOnDamaged
+            elif event_type == EventOnMoved:
+                event = EventOnMovedOldLocation(event, event.x, event.y)
+            elif event_type == EventOnMovedOldLocation:
+                event_type = EventOnMoved
             # Record state of list once to ignore changes to the list caused by subscriptions
             if entity:
                 for handler in list(self._handlers[event_type][entity]):
