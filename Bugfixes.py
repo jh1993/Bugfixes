@@ -31,70 +31,6 @@ def record(monster):
 
 LevelGen.record = curr_module.record
 
-class FreezeDependentBuff(Buff):
-
-    def on_pre_advance(self):
-        freeze = self.owner.get_buff(FrozenBuff)
-        if freeze:
-            self.turns_left = max(self.turns_left, freeze.turns_left)
-
-    def on_unapplied(self):
-        if self.turns_left <= 0:
-            return
-        buff = self.owner.get_buff(FrozenBuff)
-        if buff:
-            self.owner.apply_buff(self, self.turns_left)
-
-class HydraBeam(BreathWeapon):
-
-    def __init__(self, spell, caster, name, damage_type, dragon_mage_spell_type=None):
-        self.spell = spell
-        BreathWeapon.__init__(self)
-        self.name = name
-        self.damage = spell.get_stat("breath_damage")
-        self.range = spell.get_stat("minion_range")
-        self.damage_type = damage_type
-        self.dragon_mage_spell = None
-        if dragon_mage_spell_type:
-            self.dragon_mage_spell = dragon_mage_spell_type()
-            self.dragon_mage_spell.caster = caster
-            self.dragon_mage_spell.owner = caster
-            self.dragon_mage_spell.max_charges = 0
-            self.dragon_mage_spell.cur_charges = 0
-            self.dragon_mage_spell.range = RANGE_GLOBAL
-            self.dragon_mage_spell.requires_los = False
-            self.dragon_mage_spell.statholder = self.spell.caster
-        self.description = "Beam attack. Counts as a breath weapon."
-    
-    def cast(self, x, y):
-        for p in Bolt(self.caster.level, self.caster, Point(x, y)):
-            self.per_square_effect(p.x, p.y)
-        if self.dragon_mage_spell and self.spell.get_stat("dragon_mage"):
-            self.caster.level.act_cast(self.caster, self.dragon_mage_spell, x, y, pay_costs=False)
-        yield
-
-    def get_impacted_tiles(self, x, y):
-        return list(Bolt(self.caster.level, self.caster, Point(x, y)))
-
-def drain_max_hp_kill(unit, hp, source):
-    if unit.max_hp > hp:
-        drain_max_hp(unit, hp)
-    else:
-        old_hp = unit.max_hp
-        unit.max_hp = 1
-        unit.kill(damage_event=EventOnDamaged(unit, old_hp, Tags.Dark, source))
-
-def increase_cooldown(caster, target, melee):
-    spells = [s for s in target.spells if s.cool_down and target.cool_downs.get(s, 0) < s.get_stat("cool_down")]
-    if target.gets_clarity:
-        spells = []
-    if not spells:
-        target.deal_damage(melee.get_stat("damage"), melee.damage_type, melee)
-        return
-    spell = random.choice(spells)
-    cooldown = target.cool_downs.get(spell, 0)
-    target.cool_downs[spell] = cooldown + 1
-
 def push(target, source, squares):
     dir_x = target.x - source.x
     dir_y = target.y - source.y
@@ -109,109 +45,6 @@ def push(target, source, squares):
     dest_y = round(target.y + 3*squares*dir_y)
 
     return pull(target, Point(dest_x, dest_y), squares, find_clear=False)
-
-class RemoveBuffOnPreAdvance(Buff):
-
-    def __init__(self, buff_class):
-        self.buff_class = buff_class
-        Buff.__init__(self)
-        self.buff_type = BUFF_TYPE_PASSIVE
-        self.stack_type = STACK_INTENSITY
-    
-    def on_attempt_apply(self, owner):
-        for buff in owner.buffs:
-            if isinstance(buff, RemoveBuffOnPreAdvance) and buff.buff_class == self.buff_class:
-                return False
-        return True
-
-    def on_pre_advance(self):
-        self.owner.remove_buff(self)
-
-    def on_unapplied(self):
-        for unit in list(self.owner.level.units):
-            for buff in list(unit.buffs):
-                if isinstance(buff, self.buff_class):
-                    if hasattr(buff, "applier") and buff.applier is not self.owner:
-                        continue
-                    unit.remove_buff(buff)
-
-class EventOnPreDamagedPenetration:
-    def __init__(self, evt, penetration):
-        self.unit = evt.unit
-        self.damage = evt.damage
-        self.damage_type = evt.damage_type
-        self.source = evt.source
-        self.penetration = penetration
-
-class EventOnDamagedPenetration:
-    def __init__(self, evt, penetration):
-        self.unit = evt.unit
-        self.damage = evt.damage
-        self.damage_type = evt.damage_type
-        self.source = evt.source
-        self.penetration = penetration
-
-class EventOnMovedOldLocation:
-    def __init__(self, evt, old_x, old_y):
-        self.unit = evt.unit
-        self.x = evt.x
-        self.y = evt.y
-        self.teleport = evt.teleport
-        self.old_x = old_x
-        self.old_y = old_y
-
-class MinionBuffAura(Buff):
-
-    def __init__(self, buff_class, qualifies, name, minion_desc):
-        Buff.__init__(self)
-        self.buff_class = buff_class
-        self.qualifies = qualifies
-        self.name = name
-        example = self.buff_class()
-        self.description = "All %s you summon gain %s for a duration equal to this buff's remaining duration." % (minion_desc, example.name)
-        self.color = example.color
-        self.global_triggers[EventOnUnitAdded] = self.on_unit_added
-        self.buff_dict = defaultdict(lambda: None)
-        self.advanced = False
-        # Only used for when a unit is summoned while this buff has only 1 turn left.
-        self.ignored_units = []
-
-    def modify_unit(self, unit, duration):
-
-        if are_hostile(self.owner, unit) or (unit is self.owner) or unit in self.ignored_units:
-            return
-        if not self.qualifies(unit):
-            return
-        
-        if not unit.is_alive() and unit in self.buff_dict.keys():
-            self.buff_dict.pop(unit)
-            return
-
-        if duration <= 0:
-            self.ignored_units.append(unit)
-            return
-        
-        if unit not in self.buff_dict.keys() or not self.buff_dict[unit] or not self.buff_dict[unit].applied:
-            buff = self.buff_class()
-            unit.apply_buff(buff, duration)
-            self.buff_dict[unit] = buff
-
-    def on_pre_advance(self):
-        self.advanced = False
-
-    def on_unit_added(self, evt):
-        self.modify_unit(evt.unit, self.turns_left - (1 if not self.advanced else 0))
-    
-    def on_advance(self):
-        self.advanced = True
-        for unit in list(self.buff_dict.keys()):
-            if not unit.is_alive():
-                self.buff_dict.pop(unit)
-        for unit in list(self.owner.level.units):
-            if unit in self.ignored_units:
-                continue
-            self.modify_unit(unit, self.turns_left)
-        self.ignored_units = []
 
 def raise_skeleton(owner, unit, source=None, summon=True):
     if unit.has_been_raised:
@@ -2826,7 +2659,7 @@ def modify_class(cls):
                 self.tiles[oldx][oldy].unit = swapper
                 swapper.x = oldx
                 swapper.y = oldy
-                self.event_manager.raise_event(EventOnMovedOldLocation(EventOnMoved(swapper, oldx, oldy, teleport=teleport), x, y), swapper)			
+                self.event_manager.raise_event(EventOnMoved(swapper, oldx, oldy, teleport=teleport), swapper)			
 
                 # Fix perma circle on swap
                 if swapper.is_player_controlled:
@@ -2835,7 +2668,7 @@ def modify_class(cls):
                         prop.on_player_exit(swapper)
 
 
-            self.event_manager.raise_event(EventOnMovedOldLocation(EventOnMoved(unit, x, y, teleport=teleport), oldx, oldy), unit)
+            self.event_manager.raise_event(EventOnMoved(unit, x, y, teleport=teleport), unit)
 
             
             prop = self.tiles[x][y].prop
@@ -3144,7 +2977,7 @@ def modify_class(cls):
                 while self.can_advance_spells():
                     yield self.advance_spells()
 
-        def deal_damage(self, x, y, amount, damage_type, source, flash=True, penetration=0):
+        def deal_damage(self, x, y, amount, damage_type, source, flash=True):
 
             # Auto make effects if none were already made
             if flash:
@@ -3166,12 +2999,10 @@ def modify_class(cls):
 
             # Raise pre damage event (for conversions)
             pre_damage_event = EventOnPreDamaged(unit, amount, damage_type, source)
-            if penetration:
-                pre_damage_event = EventOnPreDamagedPenetration(pre_damage_event, penetration)
             self.event_manager.raise_event(pre_damage_event, unit)
 
             # Factor in shields and resistances after raising the raw pre damage event
-            resist_amount = unit.resists.get(damage_type, 0) - penetration
+            resist_amount = unit.resists.get(damage_type, 0)
 
             # Cap effective resists at 100- shenanigans ensue if we do not
             resist_amount = min(resist_amount, 100)
@@ -3214,8 +3045,6 @@ def modify_class(cls):
                         self.damage_taken_sources[key] += amount
 
                 damage_event = EventOnDamaged(unit, amount, damage_type, source)
-                if penetration:
-                    damage_event = EventOnDamagedPenetration(damage_event, penetration)
                 self.event_manager.raise_event(damage_event, unit)
             
                 if (unit.cur_hp <= 0):
@@ -6917,26 +6746,6 @@ def modify_class(cls):
             if p:
                 self.owner.level.add_obj(new_unit, p.x, p.y)
 
-    if cls is EventHandler:
-
-        def raise_event(self, event, entity=None):
-            event_type = type(event)
-            if event_type == EventOnPreDamagedPenetration:
-                event_type = EventOnPreDamaged
-            elif event_type == EventOnDamagedPenetration:
-                event_type = EventOnDamaged
-            elif event_type == EventOnMoved:
-                event = EventOnMovedOldLocation(event, event.x, event.y)
-            elif event_type == EventOnMovedOldLocation:
-                event_type = EventOnMoved
-            # Record state of list once to ignore changes to the list caused by subscriptions
-            if entity:
-                for handler in list(self._handlers[event_type][entity]):
-                    handler(event)
-            global_handlers = list(self._handlers[event_type][None])
-            for handler in global_handlers:
-                handler(event)
-
     if cls is SummonFloatingEye:
 
         def cast_instant(self, x, y):
@@ -8982,5 +8791,5 @@ def modify_class(cls):
         if hasattr(cls, func_name):
             setattr(cls, func_name, func)
 
-for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, SearingSealSpell, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, EventHandler, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, SpiderSpawning, TombstoneSummon, Haunted, TreeThornSummon, SpawnOnDeath, OperateSiege, UnitSprite, Moonspeaker, LightningBoltSpell, Dominate, ShieldSiphon, IceTap, BreathWeapon, LevelGenerator, WizardStarfireBeam, HagDrain, WatcherFormBuff, Stun, DeathGazeSpell, WizardSwap, Portal]:
+for cls in [Frostbite, MercurialVengeance, ThunderStrike, HealAlly, AetherDaggerSpell, OrbBuff, PyGameView, HibernationBuff, Hibernation, MulticastBuff, MulticastSpell, TouchOfDeath, BestowImmortality, Enlarge, LightningHaloBuff, LightningHaloSpell, ClarityIdolBuff, Unit, Buff, HallowFlesh, DarknessBuff, VenomSpit, VenomSpitSpell, Hunger, EyeOfRageSpell, Level, ReincarnationBuff, MagicMissile, InvokeSavagerySpell, StormNova, SummonIcePhoenix, IcePhoenixBuff, SlimeformBuff, LightningFrenzy, ArcaneCombustion, LightningWarp, NightmareBuff, HolyBlast, FalseProphetHolyBlast, Burst, RestlessDeadBuff, FlameGateBuff, StoneAuraBuff, IronSkinBuff, HolyShieldBuff, DispersionFieldBuff, SearingSealBuff, SearingSealSpell, MercurizeBuff, MagnetizeBuff, BurningBuff, BurningShrineBuff, EntropyBuff, EnervationBuff, OrbSpell, StormBreath, FireBreath, IceBreath, VoidBreath, HolyBreath, DarkBreath, GreyGorgonBreath, BatBreath, DragonRoarBuff, DragonRoarSpell, HungerLifeLeechSpell, BloodlustBuff, OrbControlSpell, SimpleBurst, PullAttack, LeapAttack, MonsterVoidBeam, ButterflyLightning, FiendStormBolt, LifeDrain, WizardLightningFlash, TideOfSin, WailOfPain, HagSwap, SimpleRangedAttack, WizardNightmare, WizardHealAura, SpiritShield, SimpleCurse, SimpleSummon, GlassyGaze, GhostFreeze, WizardBloodboil, CloudGeneratorBuff, TrollRegenBuff, DamageAuraBuff, CommonContent.ElementalEyeBuff, RegenBuff, ShieldRegenBuff, DeathExplosion, VolcanoTurtleBuff, SpiritBuff, NecromancyBuff, SporeBeastBuff, SpikeBeastBuff, BlizzardBeastBuff, VoidBomberBuff, FireBomberBuff, SpiderBuff, MushboomBuff, RedMushboomBuff, ThornQueenThornBuff, LesserCultistAlterBuff, GreaterCultistAlterBuff, CultNecromancyBuff, MagmaShellBuff, ToxicGazeBuff, ConstructShards, IronShell, ArcanePhoenixBuff, IdolOfSlimeBuff, CrucibleOfPainBuff, FieryVengeanceBuff, ConcussiveIdolBuff, VampirismIdolBuff, TeleportyBuff, LifeIdolBuff, PrinceOfRuin, StormCaller, Horror, FrozenSouls, ShrapnelBlast, ShieldSightSpell, GlobalAttrBonus, FaeThorns, Teleblink, AfterlifeShrineBuff, FrozenSkullShrineBuff, WhiteCandleShrineBuff, FaeShrineBuff, FrozenShrineBuff, CharredBoneShrineBuff, SoulpowerShrineBuff, BrightShrineBuff, GreyBoneShrineBuff, EntropyShrineBuff, EnervationShrineBuff, WyrmEggShrineBuff, ToxicAgonyBuff, BoneSplinterBuff, HauntingShrineBuff, ButterflyWingBuff, GoldSkullBuff, FurnaceShrineBuff, HeavenstrikeBuff, StormchargeBuff, WarpedBuff, TroublerShrineBuff, FaewitchShrineBuff, VoidBomberBuff, VoidBomberSuicide, FireBomberSuicide, BomberShrineBuff, SorceryShieldShrineBuff, FrostfaeShrineBuff, ChaosConductanceShrineBuff, ChaosQuillShrineBuff, FireflyShrineBuff, BloodrageShrineBuff, RazorShrineBuff, ShatterShards, ShockAndAwe, SteamAnima, Teleport, DeathBolt, SummonIceDrakeSpell, ChannelBuff, DeathCleaveBuff, CauterizingShrineBuff, Tile, SummonSiegeGolemsSpell, Approach, Crystallographer, Necrostatics, HeavenlyIdol, RingOfSpiders, UnholyAlliance, TurtleDefenseBonus, TurtleBuff, NaturalVigor, OakenShrineBuff, TundraShrineBuff, SwampShrineBuff, SandStoneShrineBuff, BlueSkyShrineBuff, MatureInto, SummonWolfSpell, AnnihilateSpell, MegaAnnihilateSpell, MeltBuff, CollectedAgony, MeteorShower, WizardQuakeport, PurityBuff, SummonGiantBear, SimpleMeleeAttack, ThornQueenThornBuff, FaeCourt, GhostfireUpgrade, SplittingBuff, GeneratorBuff, RespawnAs, SummonFloatingEye, SlimeBuff, Bolt, Spell, Icicle, PoisonSting, ArchonLightning, PyrostaticPulse, BombToss, GhostFreeze, CyclopsAllyBat, CyclopsEnemyBat, WizardIcicle, WizardIgnitePoison, SpellUpgrade, BlinkSpell, ThunderStrike, StoneAuraSpell, FrozenOrbSpell, WheelOfFate, SummonBlueLion, HolyFlame, HeavensWrath, FlockOfEaglesSpell, SummonSeraphim, EssenceAuraBuff, ConductanceSpell, PlagueOfFilth, ToxicSpore, PyrostaticHexSpell, PyroStaticHexBuff, MercurizeSpell, SummonVoidDrakeSpell, Megavenom, GeminiCloneSpell, Spells.ElementalEyeBuff, SeraphimSwordSwing, StunImmune, BlindBuff, WriteChaosScrolls, DispersalSpell, LastWord, BerserkShrineBuff, StormCloudShrineBuff, CruelShrineBuff, ThunderShrineBuff, MonsterChainLightning, Poison, TouchedBySorcery, GiantFireBombSuicide, HypocrisyStack, VenomBeastHealing, MagnetizeSpell, SummonSpiderQueen, MinionRepair, HealAuraBuff, HealMinionsSpell, AngelSong, FaestoneBuff, Soulbound, Starcharge, TideOfRot, Generator2Buff, BannerBuff, MarchOfTheRighteous, SpiderSpawning, TombstoneSummon, Haunted, TreeThornSummon, SpawnOnDeath, OperateSiege, UnitSprite, Moonspeaker, LightningBoltSpell, Dominate, ShieldSiphon, IceTap, BreathWeapon, LevelGenerator, WizardStarfireBeam, HagDrain, WatcherFormBuff, Stun, DeathGazeSpell, WizardSwap, Portal]:
     curr_module.modify_class(cls)
