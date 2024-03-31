@@ -3018,6 +3018,7 @@ def modify_class(cls):
                 return 0
 
             amount = min(amount, unit.cur_hp)
+            amount = max(unit.cur_hp - unit.max_hp, amount)
             # In case the unit is killed by a pre-damaged event triggered by a heal.
             if unit.is_alive():
                 unit.cur_hp = unit.cur_hp - amount
