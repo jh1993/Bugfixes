@@ -7,7 +7,7 @@ Visit the above link and install it the same way you install this mod, except th
 
 This mod is INCOMPATIBLE with API_Universal. That mod is old and no longer being updated, and I cannot make a compatibility patch without going through its entire code and more or less taking over maintenance duty, which I do not have the motivation to do. If you try to use it together with this mod, things WILL break under the hood even if they initially appear to work fine. I will offer no support to any problems that occur if you try to do it anyways.
 
-This mod fixes a number of things that I believe to be almost certainly bugs or unintended behavior. It also adds a few invisible things under the hood that some of my other mods require to run, since I have no better place to put them and this mod is required by said other mods to begin with.
+This mod fixes a number of things that I believe to be almost certainly bugs or unintended behavior. It is not meant to directly alter game balance in any real way.
 
 - The behavior of Frostbite + Ghostfire depended on the order in which you took the two skills. Now you always get a fire ghost when using fire damage to unfreeze an enemy.
 - Mercurial Vengeance and Toxic Fumes are now properly passive effects, meaning they're not lost upon reincarnation and can't be dispelled.
