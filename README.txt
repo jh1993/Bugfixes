@@ -256,6 +256,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - If the player is moved onto an open portal outside of their turn, they will no longer automatically enter the portal.
 - When a unit teleport swaps with another unit, the second unit's movement is now properly treated as a teleport.
 - The combat log now only reports the actual amount healed, without including any overhealing.
+- Minion Regeneration can no longer potentially skip over units if some units die while it's healing.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

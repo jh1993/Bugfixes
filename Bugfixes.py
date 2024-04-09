@@ -8010,7 +8010,7 @@ def modify_class(cls):
     if cls is MinionRepair:
 
         def on_advance(self):
-            for unit in self.owner.level.units:
+            for unit in list(self.owner.level.units):
                 if unit != self.owner and not self.owner.level.are_hostile(unit, self.owner):
                     unit.deal_damage(-2, Tags.Heal, self)
 
