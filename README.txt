@@ -11,8 +11,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 
 - The behavior of Frostbite + Ghostfire depended on the order in which you took the two skills. Now you always get a fire ghost when using fire damage to unfreeze an enemy.
 - Mercurial Vengeance and Toxic Fumes are now properly passive effects, meaning they're not lost upon reincarnation and can't be dispelled.
-- Natural Vigor and all shrine that gave resistances used to give them a second time upon reincarnation. Hibernation was not affected.
-- All shrines that gave regen used to give them a second time upon reincarnation.
+- Reincarnation no longer triggers on-summoned effects.
 - Thunder Strike Storm Power upgrade now properly stuns for twice the duration.
 - Orbs no longer disappear when completely surrounded. They still disappear when reaching their destinations.
 - Trying to examine upgrades on Orb Control no longer crashes the game.
@@ -23,7 +22,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Stunned enemies' spells no longer register on the threat detector.
 - Touch of Death extra damage types now benefit from damage bonuses.
 - Suspend Mortality can no longer be cast on targets outside its range. Description changed to state that it can also target enemies.
-- Protection shrine and Shielded Minions no longer stack on reincarnation.
 - Tablet buffs no longer apply to gates or the Imp Collector.
 - Lightning Halo now tracks its damage properly for shrines, and no longer double-hits on cast.
 - Swamp Queen's attack is no longer limited to only poisoning living targets.
@@ -40,7 +38,6 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Darkness no longer skips units if a unit somehow dies while it's applying blind. Can't happen in the base game but can happen with mods.
 - Venom Spit and Hungry Dead now properly set their owner fields when adding their respective spells. This causes them to properly count as damage done by the minions that cast them.
 - Ash imps now properly deal fire/dark/poison damage at random instead of only fire.
-- When reincarnation removes non-passive buffs after death, and reapplies itself after death if it is non-passive, this no longer counts as applying/removing buffs. May not matter for vanilla but may matter for mods.
 - Reincarnation now correctly preserves the minion duration of minions summoned by things other than spells.
 - Magic Missile Holy Bolt upgrade description now correctly states it affects demon units as well as undead.
 - If an originally non-living unit becomes living, it will now benefit from Hibernation after your next turn. Not possible in vanilla but possible with mods.
@@ -257,6 +254,8 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - When a unit teleport swaps with another unit, the second unit's movement is now properly treated as a teleport.
 - The combat log now only reports the actual amount healed, without including any overhealing.
 - Minion Regeneration can no longer potentially skip over some units if some units die while it's healing.
+- Reincarnation now removes non-passive buffs right before the unit respawns, instead of at the time of the unit's death. This means the unit retains all of its buffs while it's dead, which may matter for some effects.
+- A unit will now walk toward its next closest target if there is no path to its closest target.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.

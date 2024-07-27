@@ -2264,18 +2264,19 @@ def modify_class(cls):
                     p = random.choice(possible_movement_targets)
                     return MoveAction(p.x, p.y)
 
-            target = min(possible_movement_targets, key = lambda t: distance(Point(self.x, self.y), Point(t.x, t.y)))
+            possible_movement_targets.sort(key=lambda t: distance(Point(self.x, self.y), Point(t.x, t.y)))
+            for target in possible_movement_targets:
 
-            if distance(Point(target.x, target.y), Point(self.x, self.y)) >= 2:
-                path = self.level.find_path(Point(self.x, self.y), Point(target.x, target.y), self)
+                if distance(Point(target.x, target.y), Point(self.x, self.y)) >= 2:
+                    path = self.level.find_path(Point(self.x, self.y), Point(target.x, target.y), self)
 
-                if path:
-                    if libtcod.path_size(path) > 0:
-                        x, y = libtcod.path_get(path, 0)
-                        if self.level.can_move(self, x, y):
-                            return MoveAction(x, y)
+                    if path:
+                        if libtcod.path_size(path) > 0:
+                            x, y = libtcod.path_get(path, 0)
+                            if self.level.can_move(self, x, y):
+                                return MoveAction(x, y)
 
-                    libtcod.path_delete(path)
+                        libtcod.path_delete(path)
 
             # If you cant do anything then pass
             return PassAction()
@@ -2383,19 +2384,6 @@ def modify_class(cls):
             
             if trigger_buff_apply_event:
                 self.level.event_manager.raise_event(EventOnBuffApply(buff, self), self)
-
-        def remove_buff(self, buff, trigger_buff_remove_event=True):
-
-            if buff not in self.buffs:
-                return
-            if not buff.applied:
-                return
-
-            self.buffs.remove(buff)
-            buff.unapply()
-
-            if trigger_buff_remove_event:
-                self.level.event_manager.raise_event(EventOnBuffRemove(buff, self), self)
 
         def get_skills(self):
             return sorted((b for b in self.buffs if isinstance(b, Upgrade) and b.prereq is None), key=lambda b: b.name)
@@ -2886,6 +2874,8 @@ def modify_class(cls):
                         return 1.1
                     else:
                         return 1.0
+                if xTo != target.x or yTo != target.y:
+                    return 0.0
                 if blocker_unit.stationary:
                     return 50.0
                 else:
@@ -3240,6 +3230,11 @@ def modify_class(cls):
     if cls is ReincarnationBuff:
 
         def respawn(self):
+
+            to_remove = [b for b in self.owner.buffs if b.buff_type != BUFF_TYPE_PASSIVE]
+            for b in to_remove:
+                self.owner.buffs.remove(b)
+
             self.owner.killed = False
             self.owner.has_been_raised = False
 
@@ -3271,11 +3266,6 @@ def modify_class(cls):
 
         def on_death(self, evt):
             if self.lives >= 1:
-
-                to_remove = [b for b in self.owner.buffs if b.buff_type != BUFF_TYPE_PASSIVE]
-                for b in to_remove:
-                    self.owner.remove_buff(b, trigger_buff_remove_event=(b is not self))
-
                 self.lives -= 1
                 self.owner.level.queue_spell(self.respawn())
                 self.name = "Reincarnation %d" % self.lives
@@ -8085,28 +8075,8 @@ def modify_class(cls):
 
     if cls is Soulbound:
 
-        def __init__(self, guardian):
-            Buff.__init__(self)
-            self.owner_triggers[EventOnDamaged] = self.on_self_damage
-            self.global_triggers[EventOnDeath] = self.on_death
-            self.guardian = guardian
-            self.name = "Soul Jarred"
-            self.asset = ['status', 'soulbound']
-            self.color = Tags.Dark.color
-            self.reincarnation = guardian.get_buff(ReincarnationBuff)
-            self.global_triggers[EventOnBuffApply] = lambda evt: on_buff_apply(self, evt)
-            self.global_triggers[EventOnBuffRemove] = lambda evt: on_buff_remove(self, evt)
-
-        def on_buff_apply(self, evt):
-            if isinstance(evt.buff, ReincarnationBuff) and evt.unit is self.guardian:
-                self.reincarnation = evt.buff
-
-        def on_buff_remove(self, evt):
-            if evt.buff is self.reincarnation and evt.unit is self.guardian:
-                self.reincarnation = None
-
         def on_death(self, evt):
-            if evt.unit is self.guardian and not self.reincarnation:
+            if evt.unit is self.guardian and not self.guardian.get_buff(ReincarnationBuff):
                 self.owner.remove_buff(self)
 
         def on_self_damage(self, damage):
