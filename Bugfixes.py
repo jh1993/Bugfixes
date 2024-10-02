@@ -3266,8 +3266,20 @@ def modify_class(cls):
         def on_death(self, evt):
             if self.lives >= 1:
                 self.lives -= 1
-                self.owner.level.queue_spell(self.respawn())
+                self.owner.level.queue_spell(double_queue(self))
                 self.name = "Reincarnation %d" % self.lives
+
+        # Extremely hacky solution to a problem caused by another hack.
+        # When a unit dies, the unapply() of its buffs were changed by this mod to be queued, so that
+        # they only happen after currently queued on-death effects finished executing. This is to
+        # make it so that unit max HP and tag changes granted by buffs don't disappear before on-death
+        # effects have executed. But this would cause unapply() to be queued after respawn(), which
+        # would result in the spells granted by a buff (e.g. Touched by Sorcery if it's made passive)
+        # to be lost after respawn.
+        # To fix it, we just... double queue the respawn so that it gets queued after the unapply().
+        def double_queue(self):
+            self.owner.level.queue_spell(self.respawn())
+            yield
 
         def on_applied(self, owner):
             # Cache the initial turns to death value
