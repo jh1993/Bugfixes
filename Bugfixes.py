@@ -976,7 +976,7 @@ def modify_class(cls):
             if self.game.deploying and self.deploy_target:
                 image = get_image(["UI", "deploy_ok_animated"]) if level.can_stand(self.deploy_target.x, self.deploy_target.y, self.game.p1) else get_image(["UI", "deploy_no_animated"])
                 deploy_frames = image.get_width() // SPRITE_SIZE
-                deploy_frame = idle_frame % deploy_frames
+                deploy_frame = RiftWizard.idle_frame % deploy_frames
                 self.level_display.blit(image, (self.deploy_target.x * SPRITE_SIZE, self.deploy_target.y * SPRITE_SIZE), (deploy_frame * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE))
 
             # Blit to main screen
@@ -1413,7 +1413,7 @@ def modify_class(cls):
                             self.threat_zone.add((t.x, t.y))
                             break
 
-            blit_area = (idle_frame * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE)
+            blit_area = (RiftWizard.idle_frame * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE)
 
             to_blit = []
             
@@ -1485,7 +1485,7 @@ def modify_class(cls):
 
             for image, name, color in images:
 
-                frame = (cloud_frame_clock // 12) % (len(image.anim_frames[ANIM_IDLE]))
+                frame = (RiftWizard.cloud_frame_clock // 12) % (len(image.anim_frames[ANIM_IDLE]))
                 
                 sprite = image.anim_frames[ANIM_IDLE][frame]
                 scaledimage = pygame.transform.scale(sprite, (32, 32))
@@ -1503,7 +1503,7 @@ def modify_class(cls):
                 name = gen_params.shrine.name
                 
                 image = self.get_prop_image(gen_params.shrine)
-                frame = (cloud_frame_clock // 12) % (image.get_width() // 16)
+                frame = (RiftWizard.cloud_frame_clock // 12) % (image.get_width() // 16)
                 sourcerect = (SPRITE_SIZE * frame, 0, SPRITE_SIZE, SPRITE_SIZE)
                 subimage = image.subsurface(sourcerect) 
                 scaledimage = pygame.transform.scale(subimage, (64, 64))
@@ -1521,7 +1521,7 @@ def modify_class(cls):
             for item in gen_params.items:
                 image = get_image(item.get_asset())
 
-                frame = (cloud_frame_clock // 12) % (image.get_width() // 16)
+                frame = (RiftWizard.cloud_frame_clock // 12) % (image.get_width() // 16)
                 sourcerect = (SPRITE_SIZE * frame, 0, SPRITE_SIZE, SPRITE_SIZE)
                 subimage = image.subsurface(sourcerect)
                 scaledimage = pygame.transform.scale(subimage, (32, 32))
@@ -1535,7 +1535,7 @@ def modify_class(cls):
                 asset = ['tiles', 'library', 'library_white']
                 image = get_image(asset)
 
-                frame = (cloud_frame_clock // 12) % (image.get_width() // 16)
+                frame = (RiftWizard.cloud_frame_clock // 12) % (image.get_width() // 16)
                 sourcerect = (SPRITE_SIZE * frame, 0, SPRITE_SIZE, SPRITE_SIZE)
                 subimage = image.subsurface(sourcerect)
                 scaledimage = pygame.transform.scale(subimage, (32, 32))
@@ -1751,11 +1751,10 @@ def modify_class(cls):
                     if evt.key in self.key_binds[KEY_BIND_MESSAGE_LOG]:
                         self.open_combat_log()
 
-                global cheats_enabled
                 if can_enable_cheats and evt.key == pygame.K_z and keys[pygame.K_LSHIFT] and keys[pygame.K_LCTRL]:
-                    cheats_enabled = not cheats_enabled
+                    RiftWizard.cheats_enabled = not RiftWizard.cheats_enabled
 
-                if cheats_enabled:
+                if RiftWizard.cheats_enabled:
                     if evt.key == pygame.K_t and level_point:
                         if self.game.cur_level.can_move(self.game.p1, level_point.x, level_point.y, teleport=True):
                             self.game.cur_level.act_move(self.game.p1, level_point.x, level_point.y, teleport=True)
