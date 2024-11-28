@@ -7691,8 +7691,33 @@ def modify_class(cls):
 
     if cls is Spells.ElementalEyeBuff:
 
-        def on_init(self):
+        def __init__(self, element, damage, freq, spell):
+            Buff.__init__(self)
+            self.element = element
+            self.damage = spell.damage if hasattr(spell, "damage") else 0
+            self.freq = max(1, freq)
+            self.cooldown = freq
+            self.color = element.color
+            self.buff_type = BUFF_TYPE_BLESS
             self.stack_type = STACK_REPLACE
+            self.spell = spell
+
+        def get_description(self):
+            if not self.damage:
+                return
+            freq_str = "each turn" if self.freq == 1 else ("every %d turns" % self.freq)
+            return "Deals %d %s damage to a random enemy in LOS %s" % (self.spell.get_stat("damage", base=self.damage), self.element.name, freq_str)
+
+        def shoot(self, target):
+            self.owner.level.show_effect(0, 0, Tags.Sound_Effect, 'sorcery_ally')
+            path = self.owner.level.get_points_in_line(Point(self.owner.x, self.owner.y), target, find_clear=True)
+
+            for point in path:
+                self.owner.level.deal_damage(point.x, point.y, 0, self.element, self.spell)
+                yield 
+
+            self.owner.level.deal_damage(target.x, target.y, self.spell.get_stat("damage", base=self.damage), self.element, self.spell)
+            self.on_shoot(target)
 
     if cls is SeraphimSwordSwing:
 
