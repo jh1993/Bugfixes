@@ -257,6 +257,7 @@ This mod fixes a number of things that I believe to be almost certainly bugs or 
 - Reincarnation now removes non-passive buffs right before the unit respawns, instead of at the time of the unit's death. This means the unit retains all of its buffs while it's dead, which may matter for some effects.
 - A unit will now walk toward its next closest target if there is no path to its closest target.
 - Eye spells now update their damage dynamically according to your damage buffs, instead of snapshotting your damage buffs at the time of casting them.
+- Various issues no longer occur if there exists a spell that has the same name as a skill or another spell's upgrade. Doesn't happen in vanilla but can happen with mods.
 
 Known bugs that cannot be fixed due to them being functions instead of class methods:
 - The push() function does not work when trying to push by 1 square diagonally. Can be fixed by changing the target point to 3 times the squares pushed instead of 2 squares.
